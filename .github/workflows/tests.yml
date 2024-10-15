@@ -41,7 +41,7 @@ jobs:
         if: github.event_name == 'pull_request'
 
       - name: DEBUG - bottle files
-        run: ls -lA *bottle*
+        run: ls -lA ./*bottle*
         if: github.event_name == 'pull_request'
 
       - name: Upload bottles as artifact
