@@ -39,10 +39,11 @@
 [![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/trinitronx/donate)
 
 <!-- markdownlint-disable MD012 MD033  -->
-<kbd>[<img alt="Donate using GitHub Sponsors" src="./assets/heart-24.svg"](https://github.com/sponsors/trinitronx)></kbd>
+<!-- <kbd>[<img alt="Donate using GitHub Sponsors" src="./assets/heart-24.svg"](https://github.com/sponsors/trinitronx)></kbd>
 <span style="color:#c96198" />[![Donate using GitHub Sponsors](./assets/heart-24.svg)](https://github.com/sponsors/trinitronx)</span>
 
 <span style="color:#c96198" />[![Donate using GitHub Sponsors](./assets/heart-24.svg)](https://github.com/sponsors/trinitronx)</span>
+-->
 <!-- markdownlint-enable MD012 MD033  -->
 
 A collection of Homebrew Casks & Formulae for old or unsupported macOS
