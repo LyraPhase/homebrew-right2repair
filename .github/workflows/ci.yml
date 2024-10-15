@@ -39,7 +39,7 @@ jobs:
 
       - name: Set BREWFILE_PATH env var
         run: |
-          echo "BREWFILE_PATH=${GITHUB_WORKSPACE}/Brewfile.ci" >> $GITHUB_ENV
+          echo "BREWFILE_PATH=${GITHUB_WORKSPACE}/Brewfile.ci" >> "$GITHUB_ENV"
 
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -119,7 +119,7 @@ jobs:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
         run: |
-          brew bundle install --file=${BREWFILE_PATH}
+          brew bundle install --file="${BREWFILE_PATH}"
       - name: DEBUG - GitHub Workspace
         run: |
           echo GITHUB_WORKSPACE="$GITHUB_WORKSPACE"
