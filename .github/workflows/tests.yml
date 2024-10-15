@@ -40,6 +40,8 @@ jobs:
             brew install --build-bottle go || true
             brew link --overwrite go
             brew bottle go
+            pwd
+            find "${GITHUB_WORKSPACE}" -iname '*.bottle.*.tar.gz' -exec ls -l '{}' \;
           fi
           :
 
