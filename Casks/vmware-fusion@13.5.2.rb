@@ -7,14 +7,6 @@ cask "vmware-fusion@13.5.2" do
   desc "Create, manage, and run virtual machines"
   homepage "https://www.vmware.com/products/fusion.html"
 
-#  livecheck do
-#    url "https://softwareupdate.vmware.com/cds/vmw-desktop/fusion-universal.xml"
-#    regex(%r{fusion/(\d+(?:\.\d+)+/\d+)}i)
-#    strategy :page_match do |page, regex|
-#      page.scan(regex).map { |match| match&.first&.tr("/", ",") }
-#    end
-#  end
-
   auto_updates true
   conflicts_with cask: ["vmware-fusion@preview", "vmware-fusion"]
   depends_on macos: ">= :monterey"
