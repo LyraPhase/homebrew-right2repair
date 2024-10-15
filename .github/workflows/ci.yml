@@ -63,8 +63,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-${{ runner.arch }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-${{ runner.arch }}-rubygems-
+          key: ${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-rubygems-
 
       - name: Cache style cache
         if: runner.os == 'macOS'
@@ -82,11 +82,11 @@ jobs:
             ~/Library/Caches/Homebrew/Cask/vmware-fusion@13.5.2--*
             ~/Library/Caches/Homebrew/downloads/*--com.vmware.fusion.zip.tar*
             ~/Library/Caches/Homebrew/downloads/*--machine-*.tar.gz*
-          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}-${{ hashFiles('Casks/**.rb') }}
+          key: brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}-${{ hashFiles('Casks/**.rb') }}
           restore-keys: |
-            brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}-${{ hashFiles('Casks/**.rb') }}
-            brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
-            brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}
+            brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}-${{ hashFiles('Casks/**.rb') }}
+            brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
+            brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}
 
       # Note: Disabling this b/c size is over 3 GiB now!
       # So, cache was actually slowing down the CI run
@@ -97,10 +97,10 @@ jobs:
       #       ~/Library/Caches/Homebrew/*--*
       #       ~/Library/Caches/Homebrew/downloads/*--*
       #       ~/Library/Caches/Homebrew/Cask/*--*
-      #     key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
+      #     key: brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
       #     restore-keys: |
-      #       brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
-      #       brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}
+      #       brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
+      #       brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}
 
       - name: Run brew update
         env:
