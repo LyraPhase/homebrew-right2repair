@@ -11,8 +11,9 @@ class RancherMachine < Formula
 
   def install
     ldflags = "-s -w"
+    ldflags += " -extldflags '-static'"
+    ldflags += " -X github.com/rancher/machine/version.Version=#{version}"
     system "go", "build", *std_go_args(ldflags:), "./cmd/rancher-machine"
-
 
     Dir['contrib/completion/bash/*.bash', 'contrib/completion/zsh/_docker-machine'].each do |path|
         inreplace path do |s|
