@@ -7,6 +7,12 @@ class RancherMachine < Formula
   license "Apache-2.0"
   head "https://github.com/rancher/machine.git", branch: "master"
 
+  livecheck do
+    url :stable
+    regex(/^v?(\d+(?:\.\d+|-rancher\d+)+)$/i)
+    strategy :github_releases
+  end
+
   depends_on "go" => :build
 
   def install
