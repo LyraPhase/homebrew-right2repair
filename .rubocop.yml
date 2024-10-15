@@ -1,0 +1,23 @@
+# RuboCop will start looking for the configuration file in the directory
+# where the inspected file is and continue its way up to the root directory.
+#
+# See https://github.com/rubocop-hq/rubocop/blob/master/manual/configuration.md
+AllCops:
+  NewCops: enable
+  Include:
+    - Gemfile
+    - Rakefile
+    - Casks/*
+    - Formulas/*
+  Exclude:
+   - bin/**/*
+   - tmp/**/*
+   - vendor/**/*
+   - .github/**/*
+
+LineLength:
+  Max: 120
+
+Style/DisableCopsWithinSourceCodeDirective:
+  Enabled: true
+  AllowedCops: ['Metrics/MethodLength', 'Layout/LineEndStringConcatenationIndentation']
