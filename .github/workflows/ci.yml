@@ -115,13 +115,6 @@ jobs:
         run: |
           brew cleanup
 
-      - name: Install Brewfile.ci dependencies
-        env:
-          HOMEBREW_COLOR: 1
-          HOMEBREW_DEVELOPER: 1
-        run: |
-          brew bundle install --file="${BREWFILE_PATH}"
-
       - name: HACK - Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
@@ -132,6 +125,13 @@ jobs:
             brew link --overwrite go
           fi
           :
+
+      - name: Install Brewfile.ci dependencies
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+        run: |
+          brew bundle install --file="${BREWFILE_PATH}"
 
       - name: DEBUG - GitHub Workspace
         run: |

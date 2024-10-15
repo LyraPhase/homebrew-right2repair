@@ -27,6 +27,28 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: brew install-bundler-gems
 
+      - name: Set BREWFILE_PATH env var
+        run: |
+          echo "BREWFILE_PATH=${GITHUB_WORKSPACE}/Brewfile.ci" >> "$GITHUB_ENV"
+
+      - name: Install Brewfile.ci dependencies
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+        run: |
+          brew bundle install --file="${BREWFILE_PATH}"
+
+      - name: HACK - Force link conflicting go binaries
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+        run: |
+          if [ -e "/usr/local/opt/go@1.21" ]; then
+            brew install go || true
+            brew link --overwrite go
+          fi
+          :
+
       - run: brew test-bot --only-cleanup-before
 
       - run: brew test-bot --only-setup
