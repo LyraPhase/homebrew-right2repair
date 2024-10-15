@@ -1,8 +1,8 @@
 class RancherMachine < Formula
   desc "Create Rancher hosts locally and on cloud providers"
   homepage "https://github.com/rancher/machine"
+  url "https://github.com/rancher/machine/archive/refs/tags/v0.15.0-rancher119.tar.gz"
   version "0.15.0-rancher119"
-  url "https://github.com/rancher/machine/archive/refs/tags/v#{version}.tar.gz"
   sha256 "e9496937c91a6ea7d6736a7358a4d31f79e5ca3edcc99a37cf135ea558eabc0c"
   license "Apache-2.0"
   head "https://github.com/rancher/machine.git", branch: "master"
