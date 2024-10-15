@@ -21,7 +21,7 @@ cask "vmware-fusion@13.5.2" do
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmnet-natd"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmnet-netifup"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmnet-sniffer"
-# Does not exist in 13.5.2:  binary "#{appdir}/VMware Fusion.app/Contents/Library/vmcli"
+  # Does not exist in 13.5.2:  binary "#{appdir}/VMware Fusion.app/Contents/Library/vmcli"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmrest"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmrun"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmss2core"
