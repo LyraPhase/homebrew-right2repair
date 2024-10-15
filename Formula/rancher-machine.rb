@@ -21,9 +21,7 @@ class RancherMachine < Formula
         s.gsub!("docker_machine", "docker_machine")
       end
       dest_path = path.gsub("docker-machine", "rancher-machine")
-      unless File.exist?(dest_path)
-        File.rename(path, dest_path)
-      end
+      File.rename(path, dest_path) unless File.exist?(dest_path)
     end
 
     bash_completion.install Dir["contrib/completion/bash/*.bash"]
