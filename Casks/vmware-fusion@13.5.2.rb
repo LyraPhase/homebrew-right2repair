@@ -45,6 +45,13 @@ cask "vmware-fusion@13.5.2" do
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmware-vmx"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmware-vmx-debug"
   binary "#{appdir}/VMware Fusion.app/Contents/Library/vmware-vmx-stats"
+  # Bundled Filesystem Tools
+  binary "#{appdir}/VMware Fusion.app/Contents/Library/mkisofs"
+  binary "#{appdir}/VMware Fusion.app/Contents/Library/mkntfs"
+  binary "#{appdir}/VMware Fusion.app/Contents/Library/ntfscat"
+  binary "#{appdir}/VMware Fusion.app/Contents/Library/ntfscp"
+  binary "#{appdir}/VMware Fusion.app/Contents/Library/ntfsls"
+  binary "#{appdir}/VMware Fusion.app/Contents/Library/ntfsresize"
 
   postflight do
     system_command "#{appdir}/VMware Fusion.app/Contents/Library/Initialize VMware Fusion.tool",
