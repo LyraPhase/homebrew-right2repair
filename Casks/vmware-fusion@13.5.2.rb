@@ -16,7 +16,7 @@ cask "vmware-fusion@13.5.2" do
 #  end
 
   auto_updates true
-  conflicts_with cask: "vmware-fusion@preview", cask: "vmware-fusion"
+  conflicts_with cask: ["vmware-fusion@preview", "vmware-fusion"]
   depends_on macos: ">= :monterey"
   container nested: "com.vmware.fusion.zip"
 
