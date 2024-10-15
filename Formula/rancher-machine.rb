@@ -16,14 +16,14 @@ class RancherMachine < Formula
     system "go", "build", *std_go_args(ldflags:), "./cmd/rancher-machine"
 
     Dir["contrib/completion/bash/*.bash", "contrib/completion/zsh/_docker-machine"].each do |path|
-        inreplace path do |s|
-            s.gsub!("docker-machine", "rancher-machine")
-            s.gsub!("docker_machine", "docker_machine")
-        end
-        dest_path = path.gsub("docker-machine", "rancher-machine")
-        unless File.exist?(dest_path)
-            File.rename(path, dest_path)
-        end
+      inreplace path do |s|
+        s.gsub!("docker-machine", "rancher-machine")
+        s.gsub!("docker_machine", "docker_machine")
+      end
+      dest_path = path.gsub("docker-machine", "rancher-machine")
+      unless File.exist?(dest_path)
+        File.rename(path, dest_path)
+      end
     end
 
     bash_completion.install Dir["contrib/completion/bash/*.bash"]
