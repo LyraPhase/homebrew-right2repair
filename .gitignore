@@ -1,2 +1,4 @@
 # Sublime Text
 *.sublime-workspace
+# Ignore brewed bottles directory
+brewed-bottles

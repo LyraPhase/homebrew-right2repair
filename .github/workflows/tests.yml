@@ -31,6 +31,10 @@ jobs:
         run: |
           echo "BREWFILE_PATH=${GITHUB_WORKSPACE}/Brewfile.ci" >> "$GITHUB_ENV"
 
+      - name: Create brewed-bottles dir
+        run: |
+          mkdir brewed-bottles
+
       - name: HACK - Bottle go + Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
@@ -40,8 +44,8 @@ jobs:
             brew install --build-bottle go || true
             brew link --overwrite go
             brew bottle go
-            pwd
-            find "${GITHUB_WORKSPACE}" -iname '*.bottle.*.tar.gz' -exec ls -l '{}' \;
+            find "${GITHUB_WORKSPACE}" -iname '*.bottle.*.tar.gz' -exec mv '{}' ./brewed-bottles/ \;
+            ls -l ./brewed-bottles/
           fi
           :
 
@@ -62,11 +66,12 @@ jobs:
 
       - run: brew test-bot --only-tap-syntax
 
-      - run: brew test-bot --only-formulae
+      - run: |
+          brew test-bot --only-formulae --only-json-tab --skip-recursive-dependents --root-url="https://ghcr.io/v2/LyraPhase/right2repair"
         if: github.event_name == 'pull_request'
 
       - name: DEBUG - bottle files
-        run: ls -lA ./*bottle*
+        run: ls -lA ./brewed-bottles/
         if: github.event_name == 'pull_request'
 
       - name: Upload bottles as artifact
