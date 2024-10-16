@@ -42,12 +42,12 @@ jobs:
             --no-upload \
             --clean \
             --autosquash \
-            --tap=$GITHUB_REPOSITORY \
-            --github-org=${GITHUB_REPOSITORY_OWNER} \
+            --tap="$GITHUB_REPOSITORY" \
+            --github-org="${GITHUB_REPOSITORY_OWNER}" \
             --committer="$BREWTESTBOT_NAME_EMAIL" \
             --root-url="https://ghcr.io/v2/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/homebrew-}" \
             --retain-bottle-dir \
-            $PULL_REQUEST
+            "$PULL_REQUEST"
 
       - name: Generate build provenance
         uses: actions/attest-build-provenance@v1
