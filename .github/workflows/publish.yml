@@ -3,6 +3,30 @@ on:
   pull_request_target:
     types:
       - labeled
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Pull request number
+        type: number
+        required: true
+      large_runner:
+        description: "Run the upload job on a large runner? (default: false)"
+        type: boolean
+        required: false
+        default: false
+      autosquash:
+        description: "Squash pull request commits according to Homebrew style? (default: false)"
+        type: boolean
+        required: false
+        default: false
+      warn_on_upload_failure:
+        description: "Pass `--warn-on-upload-failure` to `brew pr-pull`? (default: false)"
+        type: boolean
+        required: false
+        default: false
+      message:
+        description: "Message to include when autosquashing revision bumps, deletions, and rebuilds (requires autosquash)"
+        required: false
 jobs:
   pr-pull:
     if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
@@ -94,7 +118,7 @@ jobs:
         uses: Homebrew/actions/post-comment@master
         with:
           token: ${{secrets.GITHUB_TOKEN}}
-          issue: ${{inputs.pull_request}}
+          issue: ${{ inputs.pull_request || github.event.pull_request.number }}
           body: ":warning: @${{github.actor}} bottle publish [failed](${{env.RUN_URL}})."
           bot_body: ":warning: Bottle publish [failed](${{env.RUN_URL}})."
           bot: github-actions[bot]
