@@ -21,12 +21,11 @@ class Go < Formula
   end
 
   bottle do
-    sha256 arm64_sequoia: "719329749bebde70f295cacf645c45ae155fda041bc92c50119997a0dd00e522"
-    sha256 arm64_sonoma:  "719329749bebde70f295cacf645c45ae155fda041bc92c50119997a0dd00e522"
-    sha256 arm64_ventura: "719329749bebde70f295cacf645c45ae155fda041bc92c50119997a0dd00e522"
-    sha256 sonoma:        "57c7e66ca7ea40cb376a54c278f763cba6a9f6cd737799c6f20ea025950293a9"
-    sha256 ventura:       "57c7e66ca7ea40cb376a54c278f763cba6a9f6cd737799c6f20ea025950293a9"
-    sha256 x86_64_linux:  "6de4daee05bd091a7c29aee73e93bde102c560392d5114e3e92b7d1fae0fbcf4"
+    root_url "https://ghcr.io/v2/lyraphase/right2repair"
+    sha256 arm64_sonoma: "719329749bebde70f295cacf645c45ae155fda041bc92c50119997a0dd00e522"
+    sha256 ventura:      "57c7e66ca7ea40cb376a54c278f763cba6a9f6cd737799c6f20ea025950293a9"
+    sha256 monterey:     "57c7e66ca7ea40cb376a54c278f763cba6a9f6cd737799c6f20ea025950293a9"
+    sha256 x86_64_linux: "fbae330758a057d9783c269732b848222e6eb9d7649b7ca4b2726fa97cdbde70"
   end
 
   # Don't update this unless this version cannot bootstrap the new version.
