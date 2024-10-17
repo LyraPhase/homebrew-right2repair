@@ -178,10 +178,7 @@ jobs:
   pr-pull:
     needs: check
     if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-12, macos-13, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
