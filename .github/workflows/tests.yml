@@ -46,7 +46,7 @@ jobs:
             brew install --build-bottle go || true
             brew link --overwrite go
             brew bottle go
-            find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' ${RUNNER_TEMP}/brewed-bottles/ \;
+            # find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' ${RUNNER_TEMP}/brewed-bottles/ \;
             ls -l ${RUNNER_TEMP}/brewed-bottles/
           fi
           :
