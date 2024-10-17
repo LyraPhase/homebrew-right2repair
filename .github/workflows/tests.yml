@@ -33,9 +33,9 @@ jobs:
 
       - name: Create brewed-bottles dir
         run: |
-          mkdir ${RUNNER_TEMP}/brewed-bottles
+          mkdir "${RUNNER_TEMP}/brewed-bottles"
           pwd
-          ls -lA ${RUNNER_TEMP}/brewed-bottles
+          ls -lA "${RUNNER_TEMP}/brewed-bottles"
 
       - name: HACK - Bottle go + Force link conflicting go binaries
         env:
@@ -46,8 +46,8 @@ jobs:
             brew install --build-bottle go || true
             brew link --overwrite go
             brew bottle go
-            find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' ${RUNNER_TEMP}/brewed-bottles/ \;
-            ls -l ${RUNNER_TEMP}/brewed-bottles/
+            find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' "${RUNNER_TEMP}/brewed-bottles/" \;
+            ls -l "${RUNNER_TEMP}/brewed-bottles/"
           fi
           :
 
@@ -74,8 +74,8 @@ jobs:
 
       - name: Move bottle files
         run: |
-          find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' ${RUNNER_TEMP}/brewed-bottles/ \;
-          ls -lA ${RUNNER_TEMP}/brewed-bottles/
+          find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' "${RUNNER_TEMP}/brewed-bottles/" \;
+          ls -lA "${RUNNER_TEMP}/brewed-bottles/"
         if: github.event_name == 'pull_request'
 
       - name: Upload bottles as artifact
