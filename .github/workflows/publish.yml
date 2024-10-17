@@ -212,7 +212,6 @@ jobs:
             --debug \
             --no-upload \
             --clean \
-            --autosquash \
             --tap="$GITHUB_REPOSITORY" \
             --committer="$BREWTESTBOT_NAME_EMAIL" \
             --root-url="https://ghcr.io/v2/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/homebrew-}" \
