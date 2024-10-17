@@ -213,7 +213,6 @@ jobs:
             --clean \
             --autosquash \
             --tap="$GITHUB_REPOSITORY" \
-            --github-org="${GITHUB_REPOSITORY_OWNER}" \
             --committer="$BREWTESTBOT_NAME_EMAIL" \
             --root-url="https://ghcr.io/v2/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/homebrew-}" \
             --retain-bottle-dir \
