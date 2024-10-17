@@ -208,6 +208,7 @@ jobs:
           HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           brew pr-pull \
+            --verbose \
             --debug \
             --no-upload \
             --clean \
