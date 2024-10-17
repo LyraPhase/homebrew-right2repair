@@ -112,7 +112,7 @@ jobs:
             gh api \
               --header 'Accept: application/vnd.github+json' \
               --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "repos/$GH_REPO/pulls/$PR"
+              "repos/$GITHUB_REPOSITORY/pulls/$PR"
           )"
           state="$(jq --raw-output .state <<< "$pr_data")"
           merged="$(jq --raw-output .merged <<< "$pr_data")"
