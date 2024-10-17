@@ -41,6 +41,7 @@ env:
 
 jobs:
   check:
+    if: (contains(github.event.pull_request.labels.*.name, 'pr-pull') || github.event.label.name == 'pr-pull')
     runs-on: ubuntu-latest
     outputs:
       bottles: ${{ steps.pr-branch-check.outputs.bottles }}
@@ -177,7 +178,7 @@ jobs:
 
   pr-pull:
     needs: check
-    if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
+    if: (contains(github.event.pull_request.labels.*.name, 'pr-pull') || github.event.label.name == 'pr-pull')
     runs-on: ubuntu-latest
     steps:
       - name: Set up Homebrew
