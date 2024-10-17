@@ -101,6 +101,8 @@ jobs:
     if: format('{0}', needs.autoreview-check.outputs.authorized) == 'true' && github.event_name == 'pull_request' && github.event.pull_request.merged != true
     needs: [test-bot, autoreview-check]
     runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
     steps:
       - name: Auto-approve review for admins
         env:
