@@ -33,9 +33,9 @@ jobs:
 
       - name: Create brewed-bottles dir
         run: |
-          mkdir ${RUNNER_TEMP}/brewed-bottles
+          mkdir "${RUNNER_TEMP}/brewed-bottles"
           pwd
-          ls -lA ${RUNNER_TEMP}/brewed-bottles
+          ls -lA "${RUNNER_TEMP}/brewed-bottles"
 
       - name: HACK - Bottle go + Force link conflicting go binaries
         env:
@@ -46,8 +46,8 @@ jobs:
             brew install --build-bottle go || true
             brew link --overwrite go
             brew bottle go
-            # find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' ${RUNNER_TEMP}/brewed-bottles/ \;
-            ls -l ${RUNNER_TEMP}/brewed-bottles/
+            # find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' "${RUNNER_TEMP}/brewed-bottles/" \;
+            ls -l "${RUNNER_TEMP}/brewed-bottles/"
           fi
           :
 
@@ -74,8 +74,8 @@ jobs:
 
       - name: Move bottle files
         run: |
-          find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' ${RUNNER_TEMP}/brewed-bottles/ \;
-          ls -lA ${RUNNER_TEMP}/brewed-bottles/
+          find "${GITHUB_WORKSPACE}" -iname '*.bottle.*' -exec mv '{}' "${RUNNER_TEMP}/brewed-bottles/" \;
+          ls -lA "${RUNNER_TEMP}/brewed-bottles/"
         if: github.event_name == 'pull_request'
 
       - name: Upload bottles as artifact
@@ -84,3 +84,56 @@ jobs:
         with:
           name: bottles_${{ matrix.os }}-${{ runner.arch }}
           path: '${{ runner.temp }}/brewed-bottles/*.bottle.*'
+  autoreview-check:
+    needs: test-bot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check triggering user permissions
+        id: check_user_permissions
+        uses: actions-cool/check-user-permission@v2.2.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ github.triggering_actor }}
+          require: admin
+    outputs:
+      authorized: ${{ steps.check_user_permissions.outputs.require-result }}
+  autoreview:
+    if: format('{0}', needs.autoreview-check.outputs.authorized) == 'true' && github.event_name == 'pull_request' && github.event.pull_request.merged != true
+    needs: [test-bot, autoreview-check]
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Auto-approve review for admins
+        env:
+          GH_TOKEN: ${{ secrets.LYRAPHASE_RUNNER_PACKAGES_TOKEN }}
+        run: |
+          pr_data="$(
+            gh api \
+              --header 'Accept: application/vnd.github+json' \
+              --header 'X-GitHub-Api-Version: 2022-11-28' \
+              "repos/$GITHUB_REPOSITORY/pulls/$PR"
+          )"
+          state="$(jq --raw-output .state <<< "$pr_data")"
+          merged="$(jq --raw-output .merged <<< "$pr_data")"
+          automerge_enabled="$(jq --raw-output '.auto_merge != null' <<< "$pr_data")"
+          if [[ -z "$state" ]] ||
+             [[ -z "$merged" ]] ||
+             [[ -z "$automerge_enabled" ]]
+          then
+            echo "::error ::Failed to get PR data!"
+            exit 1
+          fi
+          if [[ "$state" == "closed" ]]; then
+            echo "::error ::PR #$PR is closed!"
+            exit 1
+          fi
+          requires_merge=true
+          if [[ "$merged" == "true" || "$automerge_enabled" == "true" ]]; then
+            echo '::notice ::Pull request is either already merged or queued to merge.'
+            requires_merge=false
+          fi
+          if [[ "$requires_merge" == "true" ]]; then
+            gh pr comment "$PR" --body "Auto-approving repo owner PR" --repo "$GITHUB_REPOSITORY"
+            gh pr review --approve "$PR" --repo "$GITHUB_REPOSITORY"
+          fi

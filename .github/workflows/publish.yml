@@ -27,13 +27,158 @@ on:
       message:
         description: "Message to include when autosquashing revision bumps, deletions, and rebuilds (requires autosquash)"
         required: false
+
+env:
+  PR: ${{ inputs.pull_request || github.event.pull_request.number }}
+  INPUT_MESSAGE: ${{ inputs.message }}
+  # GNUPGHOME: /tmp/gnupghome
+  HOMEBREW_DEVELOPER: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_FROM_API: 1
+  GH_NO_UPDATE_NOTIFIER: 1
+  GH_PROMPT_DISABLED: 1
+  GH_REPO: ${{ github.repository }}
+
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      bottles: ${{ steps.pr-branch-check.outputs.bottles }}
+      head_sha: ${{ steps.pr-branch-check.outputs.head_sha }}
+      branch: ${{ steps.pr-branch-check.outputs.branch }}
+      remote_branch: ${{ steps.pr-branch-check.outputs.remote_branch }}
+      remote: ${{ steps.pr-branch-check.outputs.remote }}
+      replace: ${{ steps.pr-branch-check.outputs.replace }}
+      requires_merge: ${{ steps.pr-branch-check.outputs.requires_merge }}
+    env:
+      NON_PUSHABLE_MESSAGE: >-
+        :no_entry: It looks like @${{ vars.LYRAPHASE_RUNNER_USER }} cannot push to your PR branch. For future pull requests, please
+        [allow maintainers to edit your PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork) to simplify the merge process.
+      ORG_FORK_MESSAGE: >-
+        :no_entry: It looks like @${{ vars.LYRAPHASE_RUNNER_USER }} cannot push to your PR branch. Please open
+        future pull requests from a non-organization fork to simplify the merge process.
+    steps:
+      - name: Check PR approval
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if jq --exit-status 'all(.[].state; .!= "APPROVED")'
+          then
+            echo "::error ::PR #$PR is not approved!"
+            exit 1
+          fi < <(
+            gh api \
+              --header 'Accept: application/vnd.github+json' \
+              --header 'X-GitHub-Api-Version: 2022-11-28' \
+              --paginate \
+              "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews"
+          )
+
+      - name: Check PR branch for mergeability
+        id: pr-branch-check
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          pr_data="$(
+            gh api \
+              --header 'Accept: application/vnd.github+json' \
+              --header 'X-GitHub-Api-Version: 2022-11-28' \
+              "repos/$GH_REPO/pulls/$PR"
+          )"
+
+          pushable="$(jq .maintainer_can_modify <<< "$pr_data")"
+          branch="$(jq --raw-output .head.ref <<< "$pr_data")"
+          remote="$(jq --raw-output .head.repo.clone_url <<< "$pr_data")"
+          head_repo="$(jq --raw-output .head.repo.full_name <<< "$pr_data")"
+          head_repo_owner="$(jq --raw-output .head.repo.owner.login <<< "$pr_data")"
+          head_sha="$(jq --raw-output .head.sha <<< "$pr_data")"
+          fork_type="$(jq --raw-output .head.repo.owner.type <<< "$pr_data")"
+          state="$(jq --raw-output .state <<< "$pr_data")"
+          node_id="$(jq --raw-output .node_id <<< "$pr_data")"
+          merged="$(jq --raw-output .merged <<< "$pr_data")"
+          automerge_enabled="$(jq --raw-output '.auto_merge != null' <<< "$pr_data")"
+
+          if [[ -z "$pushable" ]] ||
+             [[ -z "$branch" ]] ||
+             [[ -z "$remote" ]] ||
+             [[ -z "$head_repo" ]] ||
+             [[ -z "$head_repo_owner" ]] ||
+             [[ -z "$head_sha" ]] ||
+             [[ -z "$fork_type" ]] ||
+             [[ -z "$state" ]] ||
+             [[ -z "$merged" ]] ||
+             [[ -z "$node_id" ]] ||
+             [[ -z "$automerge_enabled" ]]
+          then
+            echo "::error ::Failed to get PR data!"
+            exit 1
+          fi
+
+          if [[ "$state" = "closed" ]]
+          then
+            echo "::error ::PR #$PR is closed!"
+            exit 1
+          fi
+
+          bottles=true
+          while IFS='' read -r label
+          do
+            if [[ "$label" = "CI-syntax-only" ]] ||
+               [[ "$label" = "CI-no-bottles" ]] ||
+               [[ "$label" = "CI-published-bottle-commits" ]]
+            then
+              echo '::notice ::No bottles to publish according to PR labels.'
+              bottles=false
+              break
+            fi
+          done < <(jq --raw-output '.labels[].name' <<< "$pr_data")
+
+          requires_merge=true
+          if [[ "$merged" = "true" || "$automerge_enabled" = "true" ]]
+          then
+            echo '::notice ::Pull request is either already merged or queued to merge.'
+            requires_merge=false
+          fi
+
+          if [[ "$branch" = "master" ]]
+          then
+            branch="$head_repo_owner/master"
+            remote_branch="master"
+          else
+            remote_branch="$branch"
+          fi
+
+          {
+            echo "bottles=$bottles"
+            echo "head_sha=$head_sha"
+            echo "branch=$branch"
+            echo "remote_branch=$remote_branch"
+            echo "remote=$remote"
+            echo "node_id=$node_id"
+            echo "requires_merge=$requires_merge"
+            echo "replace=${{ inputs.autosquash }}"
+          } >> "$GITHUB_OUTPUT"
+
+          if "$pushable" && [[ "$fork_type" != "Organization" ]] ||
+             [[ "$head_repo" = "$GH_REPO" ]] ||
+             [[ "$bottles" = "false" ]]
+          then
+            exit 0
+          elif "$pushable" || [[ "$fork_type" = "Organization" ]]
+          then
+            MESSAGE="$ORG_FORK_MESSAGE"
+          else
+            MESSAGE="$NON_PUSHABLE_MESSAGE"
+          fi
+
+          echo "replace=true" >> "$GITHUB_OUTPUT"
+          gh pr comment "$PR" --body "$MESSAGE" --repo "$GITHUB_REPOSITORY"
+          gh pr edit --add-label 'no push access' "$PR" --repo "$GITHUB_REPOSITORY"
+
   pr-pull:
+    needs: check
     if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-12, macos-13, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -49,17 +194,17 @@ jobs:
         working-directory: ${{steps.set-up-homebrew.outputs.repository-path}}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr checkout "$PR" --repo "$GITHUB_REPOSITORY"
+        run: |
+          env
+          gh pr checkout "$PR" --repo "$GITHUB_REPOSITORY"
 
       - name: Pull bottles
         id: pr-pull
         env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
           BREWTESTBOT_NAME_EMAIL: ${{ vars.LYRAPHASE_RUNNER_NAME_EMAIL }}
           HOMEBREW_GITHUB_PACKAGES_USER: ${{ vars.LYRAPHASE_RUNNER_USER }}
           HOMEBREW_GITHUB_PACKAGES_TOKEN: ${{ secrets.LYRAPHASE_RUNNER_PACKAGES_TOKEN }}
           HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
-          PULL_REQUEST: ${{ github.event.pull_request.number }}
         run: |
           brew pr-pull \
             --debug \
@@ -71,7 +216,7 @@ jobs:
             --committer="$BREWTESTBOT_NAME_EMAIL" \
             --root-url="https://ghcr.io/v2/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/homebrew-}" \
             --retain-bottle-dir \
-            "$PULL_REQUEST"
+            "$PR"
 
       - name: Generate build provenance
         uses: actions/attest-build-provenance@v1
@@ -83,7 +228,6 @@ jobs:
         id: pr-upload
         working-directory: ${{steps.pr-pull.outputs.bottle_path}}
         env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
           BREWTESTBOT_NAME_EMAIL: ${{ vars.LYRAPHASE_RUNNER_NAME_EMAIL }}
           HOMEBREW_GITHUB_PACKAGES_USER: ${{ vars.LYRAPHASE_RUNNER_USER }}
           HOMEBREW_GITHUB_PACKAGES_TOKEN: ${{ secrets.LYRAPHASE_RUNNER_PACKAGES_TOKEN }}
@@ -103,10 +247,14 @@ jobs:
         uses: Homebrew/actions/git-try-push@master
         with:
           token: ${{ secrets.LYRAPHASE_RUNNER_AUTOMERGE_TOKEN }}
-          branch: test-publish
+          directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+          remote: ${{ needs.check.outputs.remote }}
+          branch: ${{ needs.check.outputs.branch }}
+          remote_branch: ${{ needs.check.outputs.remote_branch }}
         env:
           GIT_COMMITTER_NAME: ${{ vars.LYRAPHASE_RUNNER_USER }}
           GIT_COMMITTER_EMAIL: ${{ vars.LYRAPHASE_RUNNER_EMAIL }}
+          # HOMEBREW_GPG_PASSPHRASE: ${{ secrets.BREWTESTBOT_GPG_SIGNING_SUBKEY_PASSPHRASE }}
 
 # TODO: Find out if this permission is needed?
 # id-token: write
@@ -116,6 +264,8 @@ jobs:
       - name: Post comment on failure
         if: failure()
         uses: Homebrew/actions/post-comment@master
+        env:
+          RUN_URL: ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           issue: ${{ inputs.pull_request || github.event.pull_request.number }}
