@@ -27,6 +27,18 @@ on:
       message:
         description: "Message to include when autosquashing revision bumps, deletions, and rebuilds (requires autosquash)"
         required: false
+
+env:
+  PR: ${{ inputs.pull_request || github.event.pull_request.number }}
+  INPUT_MESSAGE: ${{ inputs.message }}
+  # GNUPGHOME: /tmp/gnupghome
+  HOMEBREW_DEVELOPER: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_FROM_API: 1
+  GH_NO_UPDATE_NOTIFIER: 1
+  GH_PROMPT_DISABLED: 1
+  GH_REPO: ${{ github.repository }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -38,6 +50,13 @@ jobs:
       remote: ${{ steps.pr-branch-check.outputs.remote }}
       replace: ${{ steps.pr-branch-check.outputs.replace }}
       requires_merge: ${{ steps.pr-branch-check.outputs.requires_merge }}
+    env:
+      NON_PUSHABLE_MESSAGE: >-
+        :no_entry: It looks like @${{ vars.LYRAPHASE_RUNNER_USER }} cannot push to your PR branch. For future pull requests, please
+        [allow maintainers to edit your PR](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork) to simplify the merge process.
+      ORG_FORK_MESSAGE: >-
+        :no_entry: It looks like @${{ vars.LYRAPHASE_RUNNER_USER }} cannot push to your PR branch. Please open
+        future pull requests from a non-organization fork to simplify the merge process.
     steps:
       - name: Check PR approval
         env:
@@ -183,12 +202,10 @@ jobs:
       - name: Pull bottles
         id: pr-pull
         env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
           BREWTESTBOT_NAME_EMAIL: ${{ vars.LYRAPHASE_RUNNER_NAME_EMAIL }}
           HOMEBREW_GITHUB_PACKAGES_USER: ${{ vars.LYRAPHASE_RUNNER_USER }}
           HOMEBREW_GITHUB_PACKAGES_TOKEN: ${{ secrets.LYRAPHASE_RUNNER_PACKAGES_TOKEN }}
           HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
-          PULL_REQUEST: ${{ github.event.pull_request.number }}
         run: |
           brew pr-pull \
             --debug \
@@ -200,7 +217,7 @@ jobs:
             --committer="$BREWTESTBOT_NAME_EMAIL" \
             --root-url="https://ghcr.io/v2/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY#*/homebrew-}" \
             --retain-bottle-dir \
-            "$PULL_REQUEST"
+            "$PR"
 
       - name: Generate build provenance
         uses: actions/attest-build-provenance@v1
@@ -212,7 +229,6 @@ jobs:
         id: pr-upload
         working-directory: ${{steps.pr-pull.outputs.bottle_path}}
         env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
           BREWTESTBOT_NAME_EMAIL: ${{ vars.LYRAPHASE_RUNNER_NAME_EMAIL }}
           HOMEBREW_GITHUB_PACKAGES_USER: ${{ vars.LYRAPHASE_RUNNER_USER }}
           HOMEBREW_GITHUB_PACKAGES_TOKEN: ${{ secrets.LYRAPHASE_RUNNER_PACKAGES_TOKEN }}
@@ -249,6 +265,8 @@ jobs:
       - name: Post comment on failure
         if: failure()
         uses: Homebrew/actions/post-comment@master
+        env:
+          RUN_URL: ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           issue: ${{ inputs.pull_request || github.event.pull_request.number }}
