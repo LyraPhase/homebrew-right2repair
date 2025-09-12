@@ -113,18 +113,6 @@ jobs:
         run: |
           cd ${{ steps.set-up-homebrew.outputs.repository-path }} && git checkout refs/remotes/pull/${GITHUB_REF_NAME}
         if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
-      - name: DEBUG Tap Repo merge commit post-reset
-        run: |
-          echo HOMEBREW_TAP_REPOSITORY=${{ steps.set-up-homebrew.outputs.repository-path }}
-          ls -l ${{ steps.set-up-homebrew.outputs.repository-path }}
-          cd ${{ steps.set-up-homebrew.outputs.repository-path }} && git status && git log --graph --decorate --oneline --all --abbrev-commit
-          cat ${{ steps.set-up-homebrew.outputs.repository-path }}/Casks/vmware-fusion@13.5.2.rb
-          ls -l $(brew --repo)/Library/Taps
-          ls -l $(brew --repo)/Library/Taps/lyraphase
-          ls -l $(brew --repo)/Library/Taps/lyraphase/homebrew-right2repair/
-          cat $(brew --repo)/Library/Taps/lyraphase/homebrew-right2repair/Casks/vmware-fusion@13.5.2.rb
-          cd  $(brew --repo)/Library/Taps/lyraphase/homebrew-right2repair/ && git status && git log --graph --decorate --oneline --all --abbrev-commit
-        if: ${{ env.debug_ci == 'true' }}
       - name: Clean homebrew cache
         env:
           HOMEBREW_COLOR: 1
