@@ -2,8 +2,12 @@ cask "vmware-fusion@13.5.2" do
   version "13.5.2,23775688"
   sha256 "4d470e2160acb5da7d52d478f6ef12829c5ebe3c04e3154652466ba0bfeed3f6"
 
-  url "https://softwareupdate-prod.broadcom.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
-      verified: "softwareupdate-prod.broadcom.com/"
+  # EOL due to Broadcom's enshittification
+  # Reference: https://github.com/Homebrew/homebrew-cask/pull/217370
+  #url "https://softwareupdate-prod.broadcom.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
+  #    verified: "softwareupdate-prod.broadcom.com/"
+  url "https://web.archive.org/web/20240530065157/https://softwareupdate.vmware.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
+      verified: "web.archive.org/"
   name "VMware Fusion"
   desc "Create, manage, and run virtual machines"
   homepage "https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion"
