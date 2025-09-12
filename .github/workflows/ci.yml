@@ -13,7 +13,7 @@ name: ci
       - main
       - develop
 env:
-  debug_ci: true
+  debug_ci: false
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -56,7 +56,6 @@ jobs:
           echo HOMEBREW_TAP_REPOSITORY=${{ steps.set-up-homebrew.outputs.repository-path }}
           ls -l ${{ steps.set-up-homebrew.outputs.repository-path }}
           cd ${{ steps.set-up-homebrew.outputs.repository-path }} && git status && git log --graph --decorate --oneline --all --abbrev-commit
-          cat ${{ steps.set-up-homebrew.outputs.repository-path }}/Casks/vmware-fusion@13.5.2.rb
         if: ${{ env.debug_ci == 'true' }}
 
       - name: Cache Homebrew Bundler RubyGems
