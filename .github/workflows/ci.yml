@@ -109,6 +109,10 @@ jobs:
           HOMEBREW_DEVELOPER: 1
         run: |
           brew update-reset
+      - name: Fix Tap repo checked out merge commit ref (post brew update-reset)
+        run: |
+          cd ${{ steps.set-up-homebrew.outputs.repository-path }} && git checkout refs/remotes/pull/${GITHUB_REF_NAME}
+        if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
       - name: DEBUG Tap Repo merge commit post-reset
         run: |
           echo HOMEBREW_TAP_REPOSITORY=${{ steps.set-up-homebrew.outputs.repository-path }}
