@@ -144,7 +144,7 @@ jobs:
       - name: DEBUG - List workspace and Homebrew contents
         run: |
           ls -lR "${GITHUB_WORKSPACE}"
-          ls -lR /usr/local/Homebrew
+          ls -lR "$(brew --prefix)"
         if: ${{ env.debug_ci == 'true' }}
       - name: Run tap install
         env:
