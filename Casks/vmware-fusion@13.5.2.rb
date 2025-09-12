@@ -2,10 +2,11 @@ cask "vmware-fusion@13.5.2" do
   version "13.5.2,23775688"
   sha256 "4d470e2160acb5da7d52d478f6ef12829c5ebe3c04e3154652466ba0bfeed3f6"
 
-  url "https://softwareupdate.vmware.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar"
+  url "https://softwareupdate-prod.broadcom.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
+      verified: "softwareupdate-prod.broadcom.com/"
   name "VMware Fusion"
   desc "Create, manage, and run virtual machines"
-  homepage "https://www.vmware.com/products/fusion.html"
+  homepage "https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion"
 
   livecheck do
     skip "Version-pinned to #{version}"
@@ -56,7 +57,8 @@ cask "vmware-fusion@13.5.2" do
   postflight do
     system_command "#{appdir}/VMware Fusion.app/Contents/Library/Initialize VMware Fusion.tool",
                    args: ["set"],
-                   sudo: true
+                   sudo: true,
+                   sudo_as_root: true
   end
 
   uninstall_preflight do
