@@ -4,8 +4,8 @@ cask "vmware-fusion@13.5.2" do
 
   # EOL due to Broadcom's enshittification
   # Reference: https://github.com/Homebrew/homebrew-cask/pull/217370
-  #url "https://softwareupdate-prod.broadcom.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
-  #    verified: "softwareupdate-prod.broadcom.com/"
+  # url "https://softwareupdate-prod.broadcom.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
+  #     verified: "softwareupdate-prod.broadcom.com/"
   url "https://web.archive.org/web/20240530065157/https://softwareupdate.vmware.com/cds/vmw-desktop/fusion/#{version.csv.first}/#{version.csv.second}/universal/core/com.vmware.fusion.zip.tar",
       verified: "web.archive.org/"
   name "VMware Fusion"
@@ -60,8 +60,8 @@ cask "vmware-fusion@13.5.2" do
 
   postflight do
     system_command "#{appdir}/VMware Fusion.app/Contents/Library/Initialize VMware Fusion.tool",
-                   args: ["set"],
-                   sudo: true,
+                   args:         ["set"],
+                   sudo:         true,
                    sudo_as_root: true
   end
 
