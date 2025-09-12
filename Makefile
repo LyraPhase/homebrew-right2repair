@@ -25,6 +25,11 @@ install: $(TAP_DIR) $(TAP_DIR)/$(REPO_NAME) ## Install Tap via git checkout syml
 	brew tap
 
 test: #install ## Run tests
+	pwd
+	git show HEAD
+	ls -lA $(PWD)
+	ls -lA $(TAP_DIR)/$(REPO_NAME)
+	ls -lA $(TAP_DIR)/$(REPO_NAME)/Casks/
 	brew audit --cask $(CASK_NAMES)
 	brew install --cask --verbose $(CASK_NAMES)
 	brew install --verbose $(FORMULA_NAMES)
