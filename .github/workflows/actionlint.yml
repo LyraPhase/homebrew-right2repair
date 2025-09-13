@@ -9,11 +9,11 @@ on:
       - '.github/workflows/*.yml'
       - '.github/actionlint.yaml'
   pull_request:
+    types: [opened, synchronize, reopened]
     paths:
       - '.github/workflows/*.yaml'
       - '.github/workflows/*.yml'
       - '.github/actionlint.yaml'
-  merge_group:
 
 env:
   HOMEBREW_DEVELOPER: 1
