@@ -5,11 +5,13 @@ on:
     branches:
       - master
     paths:
-      - '.github/workflows/*.ya?ml'
+      - '.github/workflows/*.yaml'
+      - '.github/workflows/*.yml'
       - '.github/actionlint.yaml'
   pull_request:
     paths:
-      - '.github/workflows/*.ya?ml'
+      - '.github/workflows/*.yaml'
+      - '.github/workflows/*.yml'
       - '.github/actionlint.yaml'
   merge_group:
 
