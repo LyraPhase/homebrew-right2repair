@@ -2,18 +2,13 @@ name: actionlint
 
 on:
   push:
-    branches:
-      - master
     paths:
-      - .github/workflows/*.yaml
-      - .github/workflows/*.yml
-      - .github/actionlint.yaml
+      - '.github/workflows/*.ya?ml'
+      - '.github/actionlint.ya?ml'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - .github/workflows/*.yaml
-      - .github/workflows/*.yml
-      - .github/actionlint.yaml
+      - '.github/workflows/**'
 
 env:
   HOMEBREW_DEVELOPER: 1
