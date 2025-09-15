@@ -1,7 +1,7 @@
 ---
 name: ci
 
-"on":
+on:
   pull_request:
     branches:
       - master
@@ -110,7 +110,7 @@ jobs:
           brew update-reset
       - name: Fix Tap repo checked out merge commit ref (post brew update-reset)
         run: |
-          cd ${{ steps.set-up-homebrew.outputs.repository-path }} && git checkout refs/remotes/pull/${GITHUB_REF_NAME}
+          cd '${{ steps.set-up-homebrew.outputs.repository-path }}' && git checkout "refs/remotes/pull/${GITHUB_REF_NAME}"
         if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
       - name: Clean homebrew cache
         env:
