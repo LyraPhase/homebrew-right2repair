@@ -28,7 +28,7 @@ install: $(TAP_DIR) $(TAP_DIR)/$(REPO_NAME) ## Install Tap via git checkout syml
 test: #install ## Run tests
 	brew audit --cask $(CASK_NAMES)
 	brew install --cask --verbose $(CASK_NAMES)
-	brew install --verbose $(FORMULA_NAMES)
+	brew install --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
 #	pkgutil --pkgs=$(PKG_ID)
 
 clean:: ## Remove temporary/build files.
