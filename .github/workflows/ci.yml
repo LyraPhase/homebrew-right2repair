@@ -123,6 +123,7 @@ jobs:
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
         run: |
           if [ -e "/usr/local/opt/go@1.21" ]; then
             brew install go || true
@@ -134,6 +135,7 @@ jobs:
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
         run: |
           brew bundle install --file="${BREWFILE_PATH}"
 
@@ -160,6 +162,7 @@ jobs:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
           HOMEBREW_DISPLAY_INSTALL_TIMES: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
         run: |
           make test
       - name: Upload install.log on failure
