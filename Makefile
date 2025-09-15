@@ -1,8 +1,9 @@
 GITHUB_USER := lyraphase
 REPO_NAME := homebrew-right2repair
 REPO := $(GITHUB_USER)/$(REPO_NAME)
+FILTER_OUT_FORMULAS := ansible-builder
 CASK_NAMES := $(patsubst %.rb,%,$(patsubst Casks/%,%,$(wildcard Casks/*.rb)))
-FORMULA_NAMES := $(patsubst %.rb,%,$(patsubst Formula/%,%,$(wildcard Formula/*.rb)))
+FORMULA_NAMES := $(filter-out $(FILTER_OUT_FORMULAS),$(patsubst %.rb,%,$(patsubst Formula/%,%,$(wildcard Formula/*.rb))))
 PKG_ID :=
 HOMEBREW_LIBRARY_TAPS := $(shell brew --repo)/Library/Taps
 TAP_DIR := $(HOMEBREW_LIBRARY_TAPS)/$(GITHUB_USER)
