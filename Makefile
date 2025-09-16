@@ -31,5 +31,9 @@ test: #install ## Run tests
 	brew install --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
 #	pkgutil --pkgs=$(PKG_ID)
 
+test-clean: ## Teardown / Cleanup after test
+	brew uninstall --cask --force --zap --verbose $(CASK_NAMES)
+	brew uninstall --force --zap --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
+
 clean:: ## Remove temporary/build files.
 	rm -rf $(TAP_DIR)/$(REPO_NAME)
