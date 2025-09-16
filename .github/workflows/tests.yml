@@ -51,10 +51,43 @@ jobs:
           fi
           :
 
+      - name: Login to GitHub Packages repo (docker v2 API)
+        id: ghcr_login
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+          LYRAPHASE_RUNNER_PACKAGES_GHCR_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN }}"
+        run: |
+          brew install jq || true
+          if [ "macOS" == "$RUNNER_OS" ]; then
+            base64_flags='-b 0 -o -'
+          elif [ "Linux" == "$RUNNER_OS" ]; then
+            base64_flags='-w 0'
+          fi
+          # shellcheck disable=SC2086
+          GHCR_BASIC_AUTH_TOKEN="$(echo -n "${LYRAPHASE_RUNNER_PACKAGES_GHCR_USER}:${LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN}" | base64 $base64_flags )"
+          GHCR_TOKEN="$(curl -o - -v -H "Authorization: Basic ${GHCR_BASIC_AUTH_TOKEN}" \
+            "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/homebrew-}/*:pull" | \
+            jq -jr '.token')"
+          if [ -n "$GHCR_TOKEN" ]; then
+            echo "ghcr_bearer_token=${GHCR_TOKEN}" >> "${GITHUB_OUTPUT}"
+          fi
+          if [ -n "$GHCR_BASIC_AUTH_TOKEN" ]; then
+            echo "ghcr_basic_token=${GHCR_BASIC_AUTH_TOKEN}" >> "${GITHUB_OUTPUT}"
+          fi
+          :
+
       - name: Install Brewfile.ci dependencies
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
+          HOMEBREW_ALLOWED_TAPS: 'lyraphase/right2repair'
+          HOMEBREW_FORBIDDEN_TAPS: 'homebrew/core'
         run: |
           brew bundle install --file="${BREWFILE_PATH}"
 
