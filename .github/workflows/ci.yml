@@ -133,12 +133,12 @@ jobs:
         run: |
           brew install jq || true
           if [ "macOS" == "$RUNNER_OS" ]; then
-            base64_wrap_flag='-b 0'
+            base64_flags='-b 0 -o -'
           elif [ "Linux" == "$RUNNER_OS" ]; then
-            base64_wrap_flag='-w 0'
+            base64_flags='-w 0'
           fi
           # shellcheck disable=SC2086
-          GHCR_BASIC_AUTH_TOKEN="$(echo -n "${LYRAPHASE_RUNNER_PACKAGES_GHCR_USER}:${LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN}" | base64 $base64_wrap_flag - )"
+          GHCR_BASIC_AUTH_TOKEN="$(echo -n "${LYRAPHASE_RUNNER_PACKAGES_GHCR_USER}:${LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN}" | base64 $base64_flags )"
           GHCR_TOKEN="$(curl -o - -v -H "Authorization: Basic ${GHCR_BASIC_AUTH_TOKEN}" \
             "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/homebrew-}/*:pull" | \
             jq -jr '.token')"
