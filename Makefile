@@ -26,7 +26,7 @@ install: $(TAP_DIR) $(TAP_DIR)/$(REPO_NAME) ## Install Tap via git checkout syml
 	brew tap
 
 test-before: ## Setup / prepare before test
-	brew uninstall --force --zap --verbose $(FORMULA_NAMES)
+	brew uninstall --force --zap --verbose --ignore-dependencies $(FORMULA_NAMES)
 
 test: #install ## Run tests
 	brew audit --cask $(CASK_NAMES)
