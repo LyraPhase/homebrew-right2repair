@@ -176,7 +176,6 @@ jobs:
           HOMEBREW_ALLOWED_TAPS: 'lyraphase/right2repair'
           HOMEBREW_FORBIDDEN_TAPS: 'homebrew/core'
         run: |
-          curl -o /tmp/go-1.23.2.arm64_sonoma.tar.gz  -v -L -H "Authorization: Bearer ${HOMEBREW_DOCKER_REGISTRY_TOKEN}"  -H 'Accept: application/gzip, application/vnd.oci.image.layer.v1.tar+gzip' "${HOMEBREW_BOTTLE_DOMAIN}/go/blobs/sha256:719329749bebde70f295cacf645c45ae155fda041bc92c50119997a0dd00e522"
           brew bundle install --file="${BREWFILE_PATH}"
 
       - name: DEBUG - GitHub Workspace
