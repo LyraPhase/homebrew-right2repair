@@ -191,6 +191,12 @@ jobs:
           ls -lR "${GITHUB_WORKSPACE}"
           ls -lR "$(brew --prefix)"
         if: ${{ env.debug_ci == 'true' }}
+      - name: Run test setup
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+          HOMEBREW_NO_SORBET_RUNTIME: 1
+        run: make test-before || true
       - name: Run tap install
         env:
           HOMEBREW_COLOR: 1
