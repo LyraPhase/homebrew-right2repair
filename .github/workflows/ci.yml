@@ -123,6 +123,33 @@ jobs:
         run: |
           brew cleanup
 
+      - name: Login to GitHub Packages repo (docker v2 API)
+        id: ghcr_login
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+          LYRAPHASE_RUNNER_PACKAGES_GHCR_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN }}"
+        run: |
+          brew install jq || true
+          if [ "macOS" == "$RUNNER_OS" ]; then
+            base64_wrap_flag='-b 0'
+          elif [ "Linux" == "$RUNNER_OS" ]; then
+            base64_wrap_flag='-w 0'
+          fi
+          # shellcheck disable=SC2086
+          GHCR_BASIC_AUTH_TOKEN="$(echo -n "${LYRAPHASE_RUNNER_PACKAGES_GHCR_USER}:${LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN}" | base64 $base64_wrap_flag - )"
+          GHCR_TOKEN="$(curl -o - -v -H "Authorization: Basic ${GHCR_BASIC_AUTH_TOKEN}" \
+            "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/homebrew-}/*:pull" | \
+            jq -jr '.token')"
+          if [ -n "$GHCR_TOKEN" ]; then
+            echo "ghcr_bearer_token='${GHCR_TOKEN}'" >> "${GITHUB_TOKEN}"
+          fi
+          if [ -n "$GHCR_BASIC_AUTH_TOKEN" ]; then
+            echo "ghcr_basic_token='${GHCR_BASIC_AUTH_TOKEN}'" >> "${GITHUB_TOKEN}"
+          fi
+          :
+
       - name: HACK - Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
