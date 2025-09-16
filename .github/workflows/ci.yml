@@ -155,6 +155,9 @@ jobs:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
           HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
         run: |
           if [ -e "/usr/local/opt/go@1.21" ]; then
             brew install go || true
@@ -167,6 +170,9 @@ jobs:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
           HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
         run: |
           brew bundle install --file="${BREWFILE_PATH}"
 
@@ -194,6 +200,9 @@ jobs:
           HOMEBREW_DEVELOPER: 1
           HOMEBREW_DISPLAY_INSTALL_TIMES: 1
           HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
         run: |
           make test
       - name: Upload install.log on failure
