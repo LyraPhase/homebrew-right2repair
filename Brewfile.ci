@@ -2,6 +2,6 @@
 cask_args appdir: "~/Applications", require_sha: true
 
 # 'brew install --formula'
-brew 'go'
+brew 'lyraphase/right2repair/go'
 # 'brew install --cask'
 # cask "macfuse"

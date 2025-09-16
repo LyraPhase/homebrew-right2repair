@@ -173,6 +173,8 @@ jobs:
           HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
           HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
           HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
+          HOMEBREW_ALLOWED_TAPS: 'lyraphase/right2repair'
+          HOMEBREW_FORBIDDEN_TAPS: 'homebrew/core'
         run: |
           brew bundle install --file="${BREWFILE_PATH}"
 
