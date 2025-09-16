@@ -13,7 +13,7 @@ on:
       - main
       - develop
 env:
-  debug_ci: false
+  debug_ci: true
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -40,6 +40,10 @@ jobs:
       - name: Set BREWFILE_PATH env var
         run: |
           echo "BREWFILE_PATH=${GITHUB_WORKSPACE}/Brewfile.ci" >> "$GITHUB_ENV"
+
+      - name: DEBUG - Print all shell env exports
+        run: export -p
+        if: ${{ env.debug_ci == 'true' }}
 
       - name: Set up Homebrew
         id: set-up-homebrew
