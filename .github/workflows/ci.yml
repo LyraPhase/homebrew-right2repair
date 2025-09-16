@@ -143,10 +143,10 @@ jobs:
             "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/homebrew-}/*:pull" | \
             jq -jr '.token')"
           if [ -n "$GHCR_TOKEN" ]; then
-            echo "ghcr_bearer_token='${GHCR_TOKEN}'" >> "${GITHUB_OUTPUT}"
+            echo "ghcr_bearer_token=${GHCR_TOKEN}" >> "${GITHUB_OUTPUT}"
           fi
           if [ -n "$GHCR_BASIC_AUTH_TOKEN" ]; then
-            echo "ghcr_basic_token='${GHCR_BASIC_AUTH_TOKEN}'" >> "${GITHUB_OUTPUT}"
+            echo "ghcr_basic_token=${GHCR_BASIC_AUTH_TOKEN}" >> "${GITHUB_OUTPUT}"
           fi
           :
 
