@@ -12,6 +12,25 @@ on:
       - master
       - main
       - develop
+  workflow_dispatch:
+    inputs:
+      bottles_artifact_id:
+        description: "Name of the bottle archive artifact from test-bot to install & test"
+        required: true
+        type: string
+      workflow_run_id:
+        description: "Run ID of the workflow that generated the artifact (passed to findBy options)"
+        required: true
+        type: number
+      bottles_artifact_url:
+        description: "URL of the bottle archive artifact"
+        required: false
+        type: string
+      bottles_artifact_digest:
+        description: "sha256sum digest of the bottle archive artifact"
+        required: false
+        type: string
+
 env:
   debug_ci: true
 jobs:
@@ -150,6 +169,27 @@ jobs:
           fi
           :
 
+      - name: DEBUG - Show artifact details if passed
+        run: |
+          echo 'bottles_artifact_id=${{ github.event.inputs.bottles_artifact_id }}'
+          echo 'bottles_artifact_digest=${{ github.event.inputs.bottles_artifact_digest }}'
+          echo 'bottles_artifact_url=${{ github.event.inputs.bottles_artifact_url }}'
+          echo 'workflow_run_id=${{ github.event.inputs.workflow_run_id }}'
+        if: ${{ env.debug_ci == 'true' && (github.event.inputs.bottles_artifact_id != '' || github.event.inputs.workflow_run_id != '') }}
+      - name: Download artifact
+        id: download_artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event.inputs.bottles_artifact_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.inputs.workflow_run_id }}
+        if: ${{ github.event.inputs.bottles_artifact_id != '' && github.event.inputs.workflow_run_id != '' }}
+      - name: DEBUG - List downloaded artifact files
+        run: |
+          ls -lA "${GITHUB_WORKSPACE}/"
+          ls -lA "${GITHUB_WORKSPACE}/${{ github.event.inputs.bottles_artifact_id }}"
+          ls -lA ${{ steps.download_artifact.outputs.download-path }}/
+        if: ${{ env.debug_ci == 'true' && github.event.inputs.bottles_artifact_id != '' && github.event.inputs.workflow_run_id != '' }}
       - name: HACK - Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
