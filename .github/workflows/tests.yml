@@ -147,6 +147,8 @@ jobs:
           BOTTLES_ARTIFACT_DIGEST: "${{ steps.upload-bottles.outputs.artifact-digest }}"
         with:
           script: |
+            console.log('context:', context);
+            console.log('platform:', core.platform);
             const bottlesArtifactID = process.env.BOTTLES_ARTIFACT_ID;
             const bottlesArtifactURL = process.env.BOTTLES_ARTIFACT_URL;
             const bottlesArtifactDigest = process.env.BOTTLES_ARTIFACT_DIGEST;
@@ -154,7 +156,7 @@ jobs:
             const outputValue = {
               ref: context.ref,
               platform: core.platform,
-              arch: context.runner.arch,
+              context: context,
               os: context.matrix.os,
               id: bottlesArtifactID,
               url: bottlesArtifactURL,
