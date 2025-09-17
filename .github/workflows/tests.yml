@@ -7,14 +7,14 @@ on:
 jobs:
   setup-matrix:
     env:
-      MATRIX_OS_LIST: '[ubuntu-latest, self-hosted-macos-12, macos-13, macos-14, macos-latest]'
+      MATRIX_OS_LIST: '["ubuntu-latest", "self-hosted-macos-12", "macos-13", "macos-14", "macos-latest"]'
     runs-on: ubuntu-latest
     outputs:
       os_list: ${{ steps.set-matrix.outputs.os_list }}
     steps:
       - id: set-matrix
         run: |
-          echo "os_list=${MATRIX_OS_LIST}" >> "$GITHUB_OUTPUT"
+          echo "os_list=${{ env.MATRIX_OS_LIST }}" >> "$GITHUB_OUTPUT"
   test-bot:
     needs: setup-matrix
     outputs:
