@@ -5,14 +5,27 @@ on:
       - main
   pull_request:
 jobs:
-  test-bot:
+  setup-matrix:
+    env:
+      MATRIX_OS_LIST: '[ubuntu-latest, self-hosted-macos-12, macos-13, macos-14, macos-latest]'
+    runs-on: ubuntu-latest
     outputs:
-      bottles_artifact_id: ${{ steps.upload-bottles.outputs.artifact-id }}
-      bottles_artifact_url: ${{ steps.upload-bottles.outputs.artifact-url }}
-      bottles_artifact_digest: ${{ steps.upload-bottles.outputs.artifact-digest }}
+      os_list: ${{ steps.set-matrix.outputs.os_list }}
+    steps:
+      - id: set-matrix
+        run: |
+          echo "os_list=${MATRIX_OS_LIST}" >> "$GITHUB_OUTPUT"
+  test-bot:
+    needs: setup-matrix
+    outputs:
+      artifact_ubuntu-latest: ${{ steps.artifact-dict.outputs.artifact_ubuntu-latest }}
+      artifact_self-hosted-macos-12: ${{ steps.artifact-dict.outputs.artifact_self-hosted-macos-12 }}
+      artifact_macos-13: ${{ steps.artifact-dict.outputs.artifact_macos-13 }}
+      artifact_macos-14: ${{ steps.artifact-dict.outputs.artifact_macos-14 }}
+      artifact_macos-latest: ${{ steps.artifact-dict.outputs.artifact_macos-latest }}
     strategy:
       matrix:
-        os: [ubuntu-latest, self-hosted-macos-12, macos-13, macos-14, macos-latest]
+        os: "${{ fromJson(needs.setup-matrix.outputs.os_list) }}"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Set up Homebrew
@@ -122,6 +135,34 @@ jobs:
         with:
           name: bottles_${{ matrix.os }}-${{ runner.arch }}
           path: '${{ runner.temp }}/brewed-bottles/*.bottle.*'
+      - name: HACK - Set per-os matrix Bottle artifact ID Output
+        id: artifact-dict
+        uses: actions/github-script@v7
+        env:
+          GITHUB_JOB_ID: "${{ github.run_number }}-${{ github.run_attempt }}"
+          BOTTLES_ARTIFACT_ID: "${{ steps.upload-bottles.outputs.artifact-id }}"
+          BOTTLES_ARTIFACT_URL: "${{ steps.upload-bottles.outputs.artifact-url }}"
+          BOTTLES_ARTIFACT_DIGEST: "${{ steps.upload-bottles.outputs.artifact-digest }}"
+        with:
+          script: |
+            const bottlesArtifactID = process.env.BOTTLES_ARTIFACT_ID;
+            const bottlesArtifactURL = process.env.BOTTLES_ARTIFACT_URL;
+            const bottlesArtifactDigest = process.env.BOTTLES_ARTIFACT_DIGEST;
+            const githubJobID = process.env.GITHUB_JOB_ID;
+            const outputValue = {
+              ref: context.ref,
+              platform: core.platform.platform,
+              arch: context.runner.arch,
+              os: context.matrix.os,
+              id: bottlesArtifactID,
+              url: bottlesArtifactURL,
+              digest: bottlesArtifactDigest,
+              job_id: githubJobID,
+              workflow_run_id: context.runId
+            };
+            const outputKey = `artifact_${context.matrix.os}`;
+            core.setOutput(outputKey, JSON.stringify(outputValue));
+          result-encoding: string
   autoreview-check:
     needs: test-bot
     runs-on: ubuntu-latest
@@ -176,32 +217,38 @@ jobs:
             gh pr review --approve "$PR" --repo "$GITHUB_REPOSITORY"
           fi
   trigger_artifact_test:
-    needs: [test-bot, autoreview-check]
+    needs: [setup-matrix, test-bot, autoreview-check]
     runs-on: ubuntu-latest
     steps:
       - name: Trigger artifact CI test workflow
         if: ${{ success() && format('{0}', needs.autoreview-check.outputs.authorized) == 'true' }}
         uses: actions/github-script@v7
-        env:
-          BOTTLES_ARTIFACT: "${{ needs.test-bot.outputs.bottles_artifact_id }}"
-          GITHUB_JOB_ID: "${{ github.run_number }}-${{ github.run_attempt }}"
-          BOTTLES_ARTIFACT_URL: "${{ needs.test-bot.outputs.bottles_artifact_url }}"
-          BOTTLES_ARTIFACT_DIGEST: "${{ needs.test-bot.outputs.bottles_artifact_digest }}"
         with:
           script: |
-            const bottlesArtifact = process.env.BOTTLES_ARTIFACT;
-            const bottlesArtifactURL = process.env.BOTTLES_ARTIFACT_URL;
-            const bottlesArtifactDigest = process.env.BOTTLES_ARTIFACT_DIGEST;
+            const osList = ${{ fromJson(needs.setup-matrix.outputs.os_list) }};
+            const outputs = ${{ toJson(needs.test-bot.outputs) }};
+            console.log('osList:', osList);
+            console.log('test-bot outputs:', outputs);
+
+            let artifactData = {};
+            for (const os of osList) {
+              const key = `artifact_${os}`;
+              try {
+                if (outputs[key]) {
+                  artifactData[os] = JSON.parse(outputs[key]);
+                }
+              } catch (e) {
+                core.warning(`Failed to parse artifact data for ${os}: ${e.message}`);
+              }
+            }
+            console.log('artifactData:', artifactData);
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'ci.yml',
               ref: context.ref,
               inputs: {
-                bottles_artifact_id: bottlesArtifact,
-                workflow_run_id: context.runId,
-                bottles_artifact_url: bottlesArtifactURL,
-                bottles_artifact_digest: bottlesArtifactDigest
+                bottles_artifact_data: toJSON.stringify(artifactData)
               }
-            })
+            });
           result-encoding: string
