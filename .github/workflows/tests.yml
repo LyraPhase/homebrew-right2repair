@@ -147,17 +147,17 @@ jobs:
           BOTTLES_ARTIFACT_DIGEST: "${{ steps.upload-bottles.outputs.artifact-digest }}"
         with:
           script: |
+            const { default: _core, platform } = await import("@actions/core");
             console.log('context:', context);
-            console.log('platform:', core.platform);
+            console.log('platform:', platform);
             const bottlesArtifactID = process.env.BOTTLES_ARTIFACT_ID;
             const bottlesArtifactURL = process.env.BOTTLES_ARTIFACT_URL;
             const bottlesArtifactDigest = process.env.BOTTLES_ARTIFACT_DIGEST;
             const githubJobID = process.env.GITHUB_JOB_ID;
             const outputValue = {
               ref: context.ref,
-              platform: core.platform,
+              platform: platform,
               context: context,
-              os: context.matrix.os,
               id: bottlesArtifactID,
               url: bottlesArtifactURL,
               digest: bottlesArtifactDigest,
