@@ -12,9 +12,11 @@ jobs:
     outputs:
       os_list: ${{ steps.set-matrix.outputs.os_list }}
     steps:
-      - id: set-matrix
+      - name: Define matrix OS list
+        id: set-matrix
         run: |
-          echo "os_list=${{ env.MATRIX_OS_LIST }}" >> "$GITHUB_OUTPUT"
+          echo MATRIX_OS_LIST is "${MATRIX_OS_LIST}"
+          echo 'os_list=${{ env.MATRIX_OS_LIST }}' >> "$GITHUB_OUTPUT"
   test-bot:
     needs: setup-matrix
     outputs:
@@ -25,7 +27,7 @@ jobs:
       artifact_macos-latest: ${{ steps.artifact-dict.outputs.artifact_macos-latest }}
     strategy:
       matrix:
-        os: "${{ fromJson(needs.setup-matrix.outputs.os_list) }}"
+        os: ${{ fromJSON(needs.setup-matrix.outputs.os_list) }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Set up Homebrew
