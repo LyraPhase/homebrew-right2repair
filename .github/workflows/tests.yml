@@ -237,6 +237,7 @@ jobs:
           DISPATCH_REF: "${{ needs.setup-matrix.outputs.dispatch_ref }}"
         with:
           script: |
+            const fs = require('node:fs');
             const osList = ${{ needs.setup-matrix.outputs.os_list }};
             const outputs = ${{ toJson(needs.test-bot.outputs) }};
             const dispatchRef = process.env.DISPATCH_REF || 'master';
@@ -257,6 +258,13 @@ jobs:
             }
             console.log('artifactData:', artifactData);
             core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData)}</code></pre>`);
+            try {
+              fs.writeFileSync(core.toPlatformPath(`${process.env.GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json`), JSON.stringify(artifactData));
+              console.log('Wrote bottles-artifact/bottles-metadata.json');
+            } catch (err) {
+              console.error(err);
+              core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Failed to write \u001b[38;5;6m${process.env.GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json\u001b[0m: \u001b[38;5;9m${err.message}\u001b[0m`);
+            }
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
