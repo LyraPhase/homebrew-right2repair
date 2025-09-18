@@ -269,6 +269,8 @@ jobs:
             } catch (err) {
               console.error(err);
               core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Failed to write \u001b[38;5;6m${bottles_metadata_file}\u001b[0m: \u001b[38;5;9m${err.message}\u001b[0m`);
+            } finally {
+              core.summary.write();
             }
           result-encoding: string
       - name: Upload bottles-metadata.json as artifact
