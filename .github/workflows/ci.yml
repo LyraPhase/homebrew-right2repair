@@ -45,6 +45,7 @@ jobs:
               core.setOutput('run-id', inputData[Object.keys(inputData)[0]].workflow_run_id || '');
               core.summary.addHeading('Bottles Artifact Data', '2');
               core.summary.addBreak();
+              core.summary.addEOL();
               core.summary.addRaw(`**Using \`workflow_run_id\` from \`workflow_dispatch\` input data:** ${inputData[Object.keys(inputData)[0]].workflow_run_id || ''}\n`);
             } catch (err) {
               core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Error reading \u001b[38;5;6mworkflow_run_id\u001b[0m from \u001b[38;5;6mbottles_artifact_data\u001b[0m JSON input: \u001b[38;5;9m${err.message}\u001b[0m`);
