@@ -32,7 +32,8 @@ jobs:
         run: |
           echo 'bottles_artifact_data=${{ github.event.inputs.bottles_artifact_data }}' >> "$GITHUB_OUTPUT"
         if: ${{ github.event.inputs.bottles_artifact_data != '' }}
-      - uses: actions/github-script@v8
+      - name: Get run-id from workflow_dispatch input data
+        uses: actions/github-script@v8
         if: ${{ github.event.inputs.bottles_artifact_data != '' }}
         id: import-artifact-data-input
         env:
