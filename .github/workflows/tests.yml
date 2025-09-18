@@ -145,6 +145,8 @@ jobs:
           BOTTLES_ARTIFACT_ID: "${{ steps.upload-bottles.outputs.artifact-id }}"
           BOTTLES_ARTIFACT_URL: "${{ steps.upload-bottles.outputs.artifact-url }}"
           BOTTLES_ARTIFACT_DIGEST: "${{ steps.upload-bottles.outputs.artifact-digest }}"
+          OS: "${{ matrix.os }}"
+          ARCH: "${{ runner.arch }}"
         with:
           script: |
             if (core.isDebug()) {
@@ -154,17 +156,19 @@ jobs:
             const bottlesArtifactURL = process.env.BOTTLES_ARTIFACT_URL;
             const bottlesArtifactDigest = process.env.BOTTLES_ARTIFACT_DIGEST;
             const githubJobID = process.env.GITHUB_JOB_ID;
+            const os = process.env.OS;
+            const arch = process.env.ARCH;
             const outputValue = {
               ref: context.ref,
-              core: core,
-              context: context,
+              os: os,
+              arch: arch,
               id: bottlesArtifactID,
               url: bottlesArtifactURL,
               digest: bottlesArtifactDigest,
               job_id: githubJobID,
               workflow_run_id: context.runId
             };
-            const outputKey = `artifact_${context.matrix.os}`;
+            const outputKey = `artifact_${os}`;
             core.setOutput(outputKey, JSON.stringify(outputValue));
           result-encoding: string
   autoreview-check:
