@@ -252,6 +252,7 @@ jobs:
               }
             }
             console.log('artifactData:', artifactData);
+            core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData)}</code></pre>`);
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
