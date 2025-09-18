@@ -284,9 +284,9 @@ jobs:
         if: ${{ env.debug_ci == 'true' && needs.bottles-artifact.outputs.bottles_artifact_data != '' }}
       - name: Download artifact
         id: download_artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
-          name: ${{ steps.artifact-data.outputs.id }}
+          artifact-ids: ${{ steps.artifact-data.outputs.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.artifact-data.outputs.workflow_run_id }}
         if: ${{ steps.artifact-data.outputs.id != '' && steps.artifact-data.outputs.workflow_run_id != '' }}
