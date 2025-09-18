@@ -110,24 +110,32 @@ jobs:
         id: artifact-data
         env:
           BOTTLES_ARTIFACT_DATA: ${{ needs.bottles-artifact.outputs.bottles_artifact_data }}
+          OS: ${{ matrix.os }}
         with:
           script: |
             const inputData = JSON.parse(process.env.BOTTLES_ARTIFACT_DATA || '{}');
-            if (Object.keys(inputData).length === 0) {
-              console.log('No bottles artifact data provided as workflow_dispatch input.');
-              console.log('Checking for artifact metadata JSON file...');
-            } else {
-              inputDataKeys = Object.keys(inputData);
-              console.log(`Found bottles artifact data for: ${inputDataKeys.join(', ')}`);
-              if (inputData[process.env.RUNNER_OS]) {
-                console.log(`Using artifact data for current OS: ${process.env.RUNNER_OS}`);
-                core.setOutput('id', inputData[process.env.RUNNER_OS].id || '');
-                core.setOutput('url', inputData[process.env.RUNNER_OS].url || '');
-                core.setOutput('digest', inputData[process.env.RUNNER_OS].digest || '');
-                core.setOutput('arch', inputData[process.env.RUNNER_OS].arch || '');
+            const os = process.env.OS || '';
+            try {
+              if (Object.keys(inputData).length === 0) {
+                console.log('No bottles artifact data provided as workflow_dispatch input.');
+                console.log('Checking for artifact metadata JSON file...');
+                core.warning(`\u001b[1m\u001b[38;5;3mWarning:\u001b[0m \u001b[38;5;9mNo bottles artifact data provided as workflow_dispatch input.\u001b[0m`);
               } else {
-                console.log(`No artifact data found for current OS: ${process.env.RUNNER_OS}`);
+                inputDataKeys = Object.keys(inputData);
+                console.log(`Found bottles artifact data for: ${inputDataKeys.join(', ')}`);
+                if (inputData[os]) {
+                  console.log(`Using artifact data for current OS: ${os}`);
+                  core.setOutput('id', inputData[os].id || '');
+                  core.setOutput('url', inputData[os].url || '');
+                  core.setOutput('digest', inputData[os].digest || '');
+                  core.setOutput('arch', inputData[os].arch || '');
+                  core.notice(`\u001b[1m\u001b[38;5;6mArtifact Data:\u001b[0m \u001b[38;5;2m${os}\u001b[0m => ${inputData[os]}`);
+                } else {
+                  core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m : \u001b[38;5;9mNo artifact data found for current OS:\u001b[0m \u001b[38;5;6m${os}\u001b[0m`);
+                }
               }
+            } finally {
+              core.summary.write();
             }
 # Now handled by Homebrew/actions/setup-homebrew
 # See: https://github.com/Homebrew/actions/blob/master/setup-homebrew/main.sh#L207-L242
