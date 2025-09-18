@@ -42,9 +42,12 @@ jobs:
           script: |
             const inputData = JSON.parse(process.env.BOTTLES_ARTIFACT_DATA || '{}');
             try {
-              core.setOutput('run-id', inputData[keys(inputData)[0]].workflow_run_id || '');
+              core.setOutput('run-id', inputData[Object.keys(inputData)[0]].workflow_run_id || '');
+              core.summary.addRaw(`**Using workflow_run_id from workflow_dispatch input data:** ${inputData[Object.keys(inputData)[0]].workflow_run_id || ''}\n`);
             } catch (err) {
-              console.log(`Errror reading workflow_run_id from bottles_artifact_data JSON input: ${err}`);
+              core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Error reading \u001b[38;5;6mworkflow_run_id\u001b[0m from \u001b[38;5;6mbottles_artifact_data\u001b[0m JSON input: \u001b[38;5;9m${err.message}\u001b[0m`);
+            } finally {
+              core.summary.write();
             }
       - name: DEBUG - Print refs
         if: ${{ env.debug_ci == 'true' }}
