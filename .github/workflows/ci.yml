@@ -111,7 +111,8 @@ jobs:
       matrix:
         os: [self-hosted-macos-12, macos-13, macos-14]
     steps:
-      - uses: actions/github-script@v8
+      - name: Get artifact data for current OS
+        uses: actions/github-script@v8
         id: artifact-data
         env:
           BOTTLES_ARTIFACT_DATA: ${{ needs.bottles-artifact.outputs.bottles_artifact_data }}
