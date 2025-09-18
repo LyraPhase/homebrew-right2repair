@@ -147,7 +147,9 @@ jobs:
           BOTTLES_ARTIFACT_DIGEST: "${{ steps.upload-bottles.outputs.artifact-digest }}"
         with:
           script: |
-            console.log('core:', core);
+            if (core.isDebug()) {
+              console.log('context:', context);
+            }
             const bottlesArtifactID = process.env.BOTTLES_ARTIFACT_ID;
             const bottlesArtifactURL = process.env.BOTTLES_ARTIFACT_URL;
             const bottlesArtifactDigest = process.env.BOTTLES_ARTIFACT_DIGEST;
