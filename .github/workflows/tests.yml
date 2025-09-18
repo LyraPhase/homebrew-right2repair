@@ -235,6 +235,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           DISPATCH_REF: "${{ needs.setup-matrix.outputs.dispatch_ref }}"
+          RUNNER_TEMP: "${{ runner.temp }}"
         with:
           script: |
             const fs = require('node:fs');
@@ -258,12 +259,15 @@ jobs:
             }
             console.log('artifactData:', artifactData);
             core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData)}</code></pre>`);
+            const bottles_metadata_dir = core.toPlatformPath(`${process.env.RUNNER_TEMP}/bottles-artifact`);
+            const bottles_metadata_file = core.toPlatformPath(`${bottles_metadata_dir}/bottles-metadata.json`);
             try {
-              fs.writeFileSync(core.toPlatformPath(`${process.env.GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json`), JSON.stringify(artifactData));
-              console.log('Wrote bottles-artifact/bottles-metadata.json');
+              core.mkdirP(bottles_metadata_dir);
+              fs.writeFileSync(bottles_metadata_file, JSON.stringify(artifactData));
+              console.log(`Wrote ${bottles_metadata_file}`);
             } catch (err) {
               console.error(err);
-              core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Failed to write \u001b[38;5;6m${process.env.GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json\u001b[0m: \u001b[38;5;9m${err.message}\u001b[0m`);
+              core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Failed to write \u001b[38;5;6m${bottles_metadata_file}\u001b[0m: \u001b[38;5;9m${err.message}\u001b[0m`);
             }
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
