@@ -230,18 +230,17 @@ jobs:
     needs: [setup-matrix, test-bot, autoreview-check]
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger artifact CI test workflow
-        if: ${{ success() && format('{0}', needs.autoreview-check.outputs.authorized) == 'true' }}
+      - name: Gather artifact metadata
+        if: ${{ success() }}
+        id: gather-artifact-metadata
         uses: actions/github-script@v7
         env:
-          DISPATCH_REF: "${{ needs.setup-matrix.outputs.dispatch_ref }}"
           RUNNER_TEMP: "${{ runner.temp }}"
         with:
           script: |
             const fs = require('node:fs');
             const osList = ${{ needs.setup-matrix.outputs.os_list }};
             const outputs = ${{ toJson(needs.test-bot.outputs) }};
-            const dispatchRef = process.env.DISPATCH_REF || 'master';
             console.log('osList:', osList);
             console.log('test-bot outputs:', outputs);
 
@@ -258,6 +257,8 @@ jobs:
               }
             }
             console.log('artifactData:', artifactData);
+            core.setOutput('artifact_data', JSON.stringify(artifactData));
+
             core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData)}</code></pre>`);
             const bottles_metadata_dir = core.toPlatformPath(`${process.env.RUNNER_TEMP}/bottles-artifact`);
             const bottles_metadata_file = core.toPlatformPath(`${bottles_metadata_dir}/bottles-metadata.json`);
@@ -269,6 +270,28 @@ jobs:
               console.error(err);
               core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Failed to write \u001b[38;5;6m${bottles_metadata_file}\u001b[0m: \u001b[38;5;9m${err.message}\u001b[0m`);
             }
+          result-encoding: string
+      - name: Upload bottles-metadata.json as artifact
+        id: upload-bottles-metadata
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottles-metadata.json
+          path: '${{ runner.temp }}/bottles-artifact/bottles-metadata.json'
+      - name: Trigger artifact CI test workflow
+        if: ${{ success() && format('{0}', needs.autoreview-check.outputs.authorized) == 'true' }}
+        uses: actions/github-script@v7
+        env:
+          DISPATCH_REF: "${{ needs.setup-matrix.outputs.dispatch_ref }}"
+          RUNNER_TEMP: "${{ runner.temp }}"
+          BOTTLES_ARTIFACT_DATA: ${{ steps.gather-artifact-metadata.outputs.artifact_data }}
+        with:
+          script: |
+            const dispatchRef = process.env.DISPATCH_REF || 'master';
+            const artifactData = process.env.BOTTLES_ARTIFACT_DATA || '';
+            console.log('artifactData:', artifactData);
+            console.log('dispatchRef:', dispatchRef);
+
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -279,10 +302,3 @@ jobs:
               }
             });
           result-encoding: string
-      - name: Upload bottles-metadata.json as artifact
-        id: upload-bottles-metadata
-        if: ${{ success() && format('{0}', needs.autoreview-check.outputs.authorized) == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: bottles-metadata.json
-          path: '${{ runner.temp }}/bottles-artifact/bottles-metadata.json'
