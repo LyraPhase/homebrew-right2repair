@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       os_list: ${{ steps.set-matrix.outputs.os_list }}
+      dispatch_ref: ${{ github.event.pull_request.head.ref || false }}
     steps:
       - name: Define matrix OS list
         id: set-matrix
@@ -232,10 +233,13 @@ jobs:
       - name: Trigger artifact CI test workflow
         if: ${{ success() && format('{0}', needs.autoreview-check.outputs.authorized) == 'true' }}
         uses: actions/github-script@v7
+        env:
+          DISPATCH_REF: "${{ needs.setup-matrix.outputs.dispatch_ref }}"
         with:
           script: |
             const osList = ${{ needs.setup-matrix.outputs.os_list }};
             const outputs = ${{ toJson(needs.test-bot.outputs) }};
+            const dispatchRef = process.env.DISPATCH_REF || 'master';
             console.log('osList:', osList);
             console.log('test-bot outputs:', outputs);
 
@@ -257,7 +261,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'ci.yml',
-              ref: context.ref,
+              ref: dispatchRef,
               inputs: {
                 bottles_artifact_data: JSON.stringify(artifactData)
               }
