@@ -243,6 +243,7 @@ jobs:
             const outputs = ${{ toJson(needs.test-bot.outputs) }};
             console.log('osList:', osList);
             console.log('test-bot outputs:', outputs);
+            core.summary.addHeading('test-bot runner jobs:', '2');
 
             let artifactData = {};
             for (const os of osList) {
@@ -259,6 +260,7 @@ jobs:
             console.log('artifactData:', artifactData);
             core.setOutput('artifact_data', JSON.stringify(artifactData));
 
+            core.summary.addList(osList.map(os => `<b>${os}:</b><ul><li><b>arch:</b> <code>${artifactData[os].arch}</code></li><li><b>id:</b> <a href="${artifactData[os].url}">${artifactData[os].id}</a></li></ul>`));
             core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData, null, 2)}</code></pre>`);
             const bottles_metadata_dir = core.toPlatformPath(`${process.env.RUNNER_TEMP}/bottles-artifact`);
             const bottles_metadata_file = core.toPlatformPath(`${bottles_metadata_dir}/bottles-metadata.json`);
