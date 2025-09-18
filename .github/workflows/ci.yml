@@ -293,8 +293,7 @@ jobs:
       - name: DEBUG - List downloaded artifact files
         run: |
           ls -lA "${GITHUB_WORKSPACE}/"
-          ls -lA "${GITHUB_WORKSPACE}/${{ steps.download_artifact.outputs.download-path }}"
-          ls -lA ${{ steps.download_artifact.outputs.download-path }}/
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}"
         if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: HACK - Force link conflicting go binaries
         env:
