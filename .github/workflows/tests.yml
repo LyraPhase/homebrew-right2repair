@@ -279,3 +279,10 @@ jobs:
               }
             });
           result-encoding: string
+      - name: Upload bottles-metadata.json as artifact
+        id: upload-bottles-metadata
+        if: ${{ success() && format('{0}', needs.autoreview-check.outputs.authorized) == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottles-metadata.json
+          path: '${{ runner.temp }}/bottles-artifact/bottles-metadata.json'
