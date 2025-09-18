@@ -265,7 +265,7 @@ jobs:
             const bottles_metadata_dir = core.toPlatformPath(`${process.env.RUNNER_TEMP}/bottles-artifact`);
             const bottles_metadata_file = core.toPlatformPath(`${bottles_metadata_dir}/bottles-metadata.json`);
             try {
-              io.mkdirP(bottles_metadata_dir);
+              await io.mkdirP(bottles_metadata_dir);
               fs.writeFileSync(bottles_metadata_file, JSON.stringify(artifactData));
               console.log(`Wrote ${bottles_metadata_file}`);
             } catch (err) {
