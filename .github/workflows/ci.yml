@@ -296,6 +296,10 @@ jobs:
           ls -lA "${GITHUB_WORKSPACE}/"
           ls -lA "${{ steps.download_artifact.outputs.download-path }}"
         if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
+      - name: Install bottles from artifact
+        run: |
+          brew install './${{ steps.download_artifact.outputs.download-path }}'/*.tar.gz
+        if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: HACK - Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
