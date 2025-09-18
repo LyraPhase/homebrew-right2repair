@@ -245,9 +245,10 @@ jobs:
               try {
                 if (outputs[key]) {
                   artifactData[os] = JSON.parse(outputs[key]);
+                  core.notice(`\u001b[1m\u001b[38;5;6mArtifact:\u001b[0m \u001b[38;5;2m${os}\u001b[0m => ${outputs[key]}`);
                 }
               } catch (e) {
-                core.warning(`Failed to parse artifact data for ${os}: ${e.message}`);
+                core.warning(`\u001b[1m\u001b[38;5;3mWarning:\u001b[0m Failed to parse artifact data for \u001b[38;5;4m${os}\u001b[0m: \u001b[38;5;9m${e.message}\u001b[0m`);
               }
             }
             console.log('artifactData:', artifactData);
