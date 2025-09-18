@@ -109,7 +109,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [self-hosted-macos-12, macos-13, macos-14]
+        os: [ubuntu-latest, macos-latest]
     steps:
       - name: Get artifact data for current OS
         uses: actions/github-script@v8
