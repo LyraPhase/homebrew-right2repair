@@ -14,32 +14,116 @@ on:
       - develop
   workflow_dispatch:
     inputs:
-      bottles_artifact_id:
-        description: "Name of the bottle archive artifact from test-bot to install & test"
+      bottles_artifact_data:
+        description: "JSON string with artifact details from test-bot to install & test"
         required: true
-        type: string
-      workflow_run_id:
-        description: "Run ID of the workflow that generated the artifact (passed to findBy options)"
-        required: true
-        type: number
-      bottles_artifact_url:
-        description: "URL of the bottle archive artifact"
-        required: false
-        type: string
-      bottles_artifact_digest:
-        description: "sha256sum digest of the bottle archive artifact"
-        required: false
         type: string
 
 env:
   debug_ci: true
 jobs:
+  bottles-artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      bottles_artifact_data: ${{ steps.set-data.outputs.bottles_artifact_data || steps.import-artifact-data.outputs.bottles_artifact_data }}
+    steps:
+      - name: Set outputs from workflow dispatch inputs
+        id: set-data
+        run: |
+          echo 'bottles_artifact_data=${{ github.event.inputs.bottles_artifact_data }}' >> "$GITHUB_OUTPUT"
+        if: ${{ github.event.inputs.bottles_artifact_data != '' }}
+      - uses: actions/github-script@v8
+        if: ${{ github.event.inputs.bottles_artifact_data != '' }}
+        id: import-artifact-data-input
+        env:
+          BOTTLES_ARTIFACT_DATA: ${{ steps.set-data.outputs.bottles_artifact_data }}
+        with:
+          script: |
+            const inputData = JSON.parse(process.env.BOTTLES_ARTIFACT_DATA || '{}');
+            try {
+              core.setOutput('run-id', inputData[keys(inputData)[0]].workflow_run_id || '');
+            } catch (err) {
+              console.log(`Errror reading workflow_run_id from bottles_artifact_data JSON input: ${err}`);
+            }
+      - name: Wait for tests to succeed
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        uses: lewagon/wait-on-check-action@v1.4.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'trigger_artifact_test'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      - name: Get run ID of "tests.yml" workflow
+        id: tests-workflow
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        run: |
+          REPO="${{ github.repository }}"
+          WF_NAME="tests.yml"
+          RUN_ID="$(gh run --repo "${REPO}" list --workflow "${WF_NAME}" --json databaseId --jq '.[0].databaseId')"
+          echo "Detected latest run id of ${RUN_ID} for workflow ${WF_NAME}"
+          echo "run-id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v5
+        id: download-artifact-metadata
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        with:
+          pattern: 'bottles-metadata.json'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.import-artifact-data-input.outputs.run-id || steps.tests-workflow.outputs.run-id }}
+          path: "${GITHUB_WORKSPACE}/bottles-artifact"
+      - name: DEBUG - Artifact bottles-metadata.json contents
+        if: ${{ env.debug_ci == 'true' && github.event.inputs.bottles_artifact_data == '' }}
+        run: |
+          ls -R ${{ steps.download-artifact-metadata.outputs.download-path }}
+          cat "${GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json" || true
+      - uses: actions/github-script@v8
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        id: import-artifact-data
+        env:
+          BOTTLES_ARTIFACT_DATA_JSON_FILE: ${{ steps.download-artifact-metadata.outputs.download-path }}/bottles-metadata.json
+        with:
+          script: |
+            const fs = require('node:fs');
+            const inputDataFile = process.env.BOTTLES_ARTIFACT_DATA_JSON_FILE;
+            let inputData = {};
+            try {
+              inputData = JSON.parse(fs.readFileSync(inputDataFile, 'utf8'));
+              core.setOutput('bottles_artifact_data', JSON.stringify(inputData));
+            } catch (err) {
+              console.log(`Errror reading data from artifact metadata JSON file: ${err}`);
+            }
+
   test:
+    needs: bottles-artifact
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [self-hosted-macos-12, macos-13, macos-14]
     steps:
+      - uses: actions/github-script@v8
+        id: artifact-data
+        env:
+          BOTTLES_ARTIFACT_DATA: ${{ needs.bottles-artifact.outputs.bottles_artifact_data }}
+        with:
+          script: |
+            const inputData = JSON.parse(process.env.BOTTLES_ARTIFACT_DATA || '{}');
+            if (Object.keys(inputData).length === 0) {
+              console.log('No bottles artifact data provided as workflow_dispatch input.');
+              console.log('Checking for artifact metadata JSON file...');
+            } else {
+              inputDataKeys = Object.keys(inputData);
+              console.log(`Found bottles artifact data for: ${inputDataKeys.join(', ')}`);
+              if (inputData[process.env.RUNNER_OS]) {
+                console.log(`Using artifact data for current OS: ${process.env.RUNNER_OS}`);
+                core.setOutput('id', inputData[process.env.RUNNER_OS].id || '');
+                core.setOutput('url', inputData[process.env.RUNNER_OS].url || '');
+                core.setOutput('digest', inputData[process.env.RUNNER_OS].digest || '');
+                core.setOutput('arch', inputData[process.env.RUNNER_OS].arch || '');
+              } else {
+                console.log(`No artifact data found for current OS: ${process.env.RUNNER_OS}`);
+              }
+            }
 # Now handled by Homebrew/actions/setup-homebrew
 # See: https://github.com/Homebrew/actions/blob/master/setup-homebrew/main.sh#L207-L242
 #      - name: Check out code
@@ -171,25 +255,22 @@ jobs:
 
       - name: DEBUG - Show artifact details if passed
         run: |
-          echo 'bottles_artifact_id=${{ github.event.inputs.bottles_artifact_id }}'
-          echo 'bottles_artifact_digest=${{ github.event.inputs.bottles_artifact_digest }}'
-          echo 'bottles_artifact_url=${{ github.event.inputs.bottles_artifact_url }}'
-          echo 'workflow_run_id=${{ github.event.inputs.workflow_run_id }}'
-        if: ${{ env.debug_ci == 'true' && (github.event.inputs.bottles_artifact_id != '' || github.event.inputs.workflow_run_id != '') }}
+          echo 'bottles_artifact_data=${{ needs.bottles-artifact.outputs.bottles_artifact_data }}'
+        if: ${{ env.debug_ci == 'true' && needs.bottles-artifact.outputs.bottles_artifact_data != '' }}
       - name: Download artifact
         id: download_artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ github.event.inputs.bottles_artifact_id }}
+          name: ${{ steps.artifact-data.outputs.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.inputs.workflow_run_id }}
-        if: ${{ github.event.inputs.bottles_artifact_id != '' && github.event.inputs.workflow_run_id != '' }}
+          run-id: ${{ steps.artifact-data.outputs.workflow_run_id }}
+        if: ${{ steps.artifact-data.outputs.id != '' && steps.artifact-data.outputs.workflow_run_id != '' }}
       - name: DEBUG - List downloaded artifact files
         run: |
           ls -lA "${GITHUB_WORKSPACE}/"
-          ls -lA "${GITHUB_WORKSPACE}/${{ github.event.inputs.bottles_artifact_id }}"
+          ls -lA "${GITHUB_WORKSPACE}/${{ steps.download_artifact.outputs.download-path }}"
           ls -lA ${{ steps.download_artifact.outputs.download-path }}/
-        if: ${{ env.debug_ci == 'true' && github.event.inputs.bottles_artifact_id != '' && github.event.inputs.workflow_run_id != '' }}
+        if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: HACK - Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
