@@ -275,6 +275,10 @@ jobs:
       - name: DEBUG - Show artifact details if passed
         run: |
           echo 'bottles_artifact_data=${{ needs.bottles-artifact.outputs.bottles_artifact_data }}'
+          echo 'artifact id=${{ steps.artifact-data.outputs.id }}'
+          echo 'artifact url=${{ steps.artifact-data.outputs.url }}'
+          echo 'artifact digest=${{ steps.artifact-data.outputs.digest }}'
+          echo 'artifact arch=${{ steps.artifact-data.outputs.arch }}'
         if: ${{ env.debug_ci == 'true' && needs.bottles-artifact.outputs.bottles_artifact_data != '' }}
       - name: Download artifact
         id: download_artifact
