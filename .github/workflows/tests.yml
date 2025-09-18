@@ -257,7 +257,7 @@ jobs:
               workflow_id: 'ci.yml',
               ref: context.ref,
               inputs: {
-                bottles_artifact_data: toJSON.stringify(artifactData)
+                bottles_artifact_data: JSON.stringify(artifactData)
               }
             });
           result-encoding: string
