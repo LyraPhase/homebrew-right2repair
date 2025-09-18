@@ -291,14 +291,17 @@ jobs:
             const artifactData = process.env.BOTTLES_ARTIFACT_DATA || '';
             console.log('artifactData:', artifactData);
             console.log('dispatchRef:', dispatchRef);
-
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'ci.yml',
-              ref: dispatchRef,
-              inputs: {
-                bottles_artifact_data: JSON.stringify(artifactData)
-              }
-            });
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'ci.yml',
+                ref: dispatchRef,
+                inputs: {
+                  bottles_artifact_data: JSON.stringify(artifactData)
+                }
+              });
+            } finally {
+              core.summary.write();
+            }
           result-encoding: string
