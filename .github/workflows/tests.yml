@@ -259,7 +259,7 @@ jobs:
             console.log('artifactData:', artifactData);
             core.setOutput('artifact_data', JSON.stringify(artifactData));
 
-            core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData)}</code></pre>`);
+            core.summary.addDetails('Bottles Artifact Data:', `<pre lang="javascript"><code>${JSON.stringify(artifactData, null, 2)}</code></pre>`);
             const bottles_metadata_dir = core.toPlatformPath(`${process.env.RUNNER_TEMP}/bottles-artifact`);
             const bottles_metadata_file = core.toPlatformPath(`${bottles_metadata_dir}/bottles-metadata.json`);
             try {
