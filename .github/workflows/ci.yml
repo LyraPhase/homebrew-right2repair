@@ -322,6 +322,12 @@ jobs:
             brew link --overwrite go
           fi
           :
+      - name: Debug Brewfile.ci dependencies
+        run: |
+          cat "${BREWFILE_PATH}"
+          git show HEAD
+          git status && git log --graph --decorate --oneline --all --abbrev-commit
+        if: ${{ env.debug_ci == 'true' }}
 
       - name: Install Brewfile.ci dependencies
         env:
