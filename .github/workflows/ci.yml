@@ -189,14 +189,16 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && steps.artifact-data.outputs.ref != github.ref
         run: |
           cd "${GITHUB_WORKSPACE}"
+          set +e
           head_ref_sha="$(git show-ref -s HEAD 2>/dev/null)"
-          echo "HEAD was at ${head_ref}"
+          echo "HEAD was at ${head_ref_sha}"
           artifact_ref="${{ steps.artifact-data.outputs.ref || '' }}"
           echo "Artifact ref: ${artifact_ref}"
           artifact_ref_sha="$(git show-ref -s "${artifact_ref}" 2>/dev/null)"
           echo "Artifact ref sha: ${artifact_ref_sha}"
           if [ "${head_ref_sha}" != "${artifact_ref_sha}" ] && [ -n "${artifact_ref_sha}" ]; then
             echo "Checking out artifact ref ${artifact_ref} at sha ${artifact_ref_sha}"
+            set -e
             git fetch origin "${artifact_ref}:refs/remotes/pull/${artifact_ref}"
             git checkout "refs/remotes/pull/${artifact_ref}"
           else
