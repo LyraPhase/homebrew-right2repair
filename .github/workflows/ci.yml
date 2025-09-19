@@ -263,7 +263,7 @@ jobs:
       #       brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
       #       brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}
 
-      - name: Run brew update
+      - name: Run brew update-reset
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
@@ -273,6 +273,7 @@ jobs:
         run: |
           cd '${{ steps.set-up-homebrew.outputs.repository-path }}' && git checkout "refs/remotes/pull/${GITHUB_REF_NAME}"
         if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
+
       - name: Clean homebrew cache
         env:
           HOMEBREW_COLOR: 1
