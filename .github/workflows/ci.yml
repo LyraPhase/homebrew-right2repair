@@ -55,7 +55,9 @@ jobs:
       - name: DEBUG - Print refs
         if: ${{ env.debug_ci == 'true' }}
         run: |
-          echo '${{ github.ref }}'
+          echo 'github.ref=${{ github.ref }}'
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+          echo 'github.ref_name=${{ github.ref_name }}'
       - name: Wait for tests to succeed
         if: ${{ github.event.inputs.bottles_artifact_data == '' }}
         uses: lewagon/wait-on-check-action@v1.4.0
