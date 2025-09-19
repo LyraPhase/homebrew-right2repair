@@ -154,9 +154,13 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Add SSH_AUTH_SOCK to user shell .profile
         run: |
-          sudo tee -a ~/.profile <<EOPROFILE
-          SSH_AUTH_SOCK=${{ env.SSH_AUTH_SOCK }}
+          [ ! -d "${HOME}/.profile.d" ] && mkdir -p ~/.profile.d || true
+          tee -a ~/.profile <<EOPROFILE
+          [ -n "\$(ls "\$HOME"/.profile.d 2>/dev/null)" ] && for f in "\$HOME"/.profile.d/*.sh; do . "\$f" ; done
           EOPROFILE
+          tee -a ~/.profile.d/09-ssh-auth-sock.sh <<EOPROFILED
+          SSH_AUTH_SOCK=${{ env.SSH_AUTH_SOCK }}
+          EOPROFILED
       - name: Configure global git SSH URLs
         run: |
           git config --global url."git@github.com:".insteadOf "https://github.com/"
@@ -381,3 +385,13 @@ jobs:
           HOMEBREW_DISPLAY_INSTALL_TIMES: 1
         run: |
           make test-clean
+      - name: Cleanup SSH_AUTH_SOCK from user shell .profile
+        run: |
+          [ -f "${HOME}/.profile.d/09-ssh-auth-sock.sh" ] && rm -f ~/.profile.d/09-ssh-auth-sock.sh || true
+          [ -d "${HOME}/.profile.d" ] && rmdir ~/.profile.d || true
+          if [ -f "${HOME}/.profile" ]; then
+            sed -i'' -e '/^SSH_AUTH_SOCK=/d' ~/.profile || true
+            # shellcheck disable=SC2016
+            sed -i''  -e '/^[ -n "\$(ls "\$HOME"\/profile\.d 2>\/dev\/null)" ].*/d' ~/.profile || true
+            [ -f "${HOME}/.profile-e" ] && rm -f ~/.profile-e || true
+          fi
