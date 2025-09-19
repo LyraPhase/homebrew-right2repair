@@ -298,6 +298,9 @@ jobs:
           ls -lA "${{ steps.download_artifact.outputs.download-path }}"/*.bottle.tar.gz || true
         if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: Install bottles from artifact
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
         run: |
           brew install ${{ steps.download_artifact.outputs.download-path }}/*.bottle.tar.gz
         if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
