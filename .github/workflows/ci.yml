@@ -289,7 +289,7 @@ jobs:
           artifact-ids: ${{ steps.artifact-data.outputs.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.artifact-data.outputs.workflow_run_id }}
-          path: "${GITHUB_WORKSPACE}/bottles-artifact"
+          path: "${{ github.workspace }}/bottles-artifact"
         if: ${{ steps.artifact-data.outputs.id != '' && steps.artifact-data.outputs.workflow_run_id != '' }}
       - name: DEBUG - List downloaded artifact files
         run: |
