@@ -392,6 +392,7 @@ jobs:
         run: |
           make test-clean || true
       - name: Cleanup SSH_AUTH_SOCK from user shell .profile
+        if: always()
         run: |
           [ -f "${HOME}/.profile.d/09-ssh-auth-sock.sh" ] && rm -f ~/.profile.d/09-ssh-auth-sock.sh || true
           [ -d "${HOME}/.profile.d" ] && rmdir ~/.profile.d || true
