@@ -178,6 +178,13 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
 
+      - name: DEBUG - Print refs & github event name
+        run: |
+          echo "github.event_name=${{github.event_name}}"
+          echo "github.ref=${{github.ref}}"
+          echo "steps.artifact-data.outputs.ref=${{ steps.artifact-data.outputs.ref }}"
+        if: ${{ env.debug_ci == 'true' }}
+
       - name: Simulate merge commit for PRs
         if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
         run: |
