@@ -294,7 +294,8 @@ jobs:
       - name: DEBUG - List downloaded artifact files
         run: |
           ls -lA "${GITHUB_WORKSPACE}/"
-          ls -lA "${{ steps.download_artifact.outputs.download-path }}"
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}" || true
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}"/*.bottle.tar.gz || true
         if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: Install bottles from artifact
         run: |
