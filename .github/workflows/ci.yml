@@ -187,32 +187,7 @@ jobs:
           echo "steps.artifact-data.outputs.ref=${{ steps.artifact-data.outputs.ref }}"
         if: ${{ env.debug_ci == 'true' }}
 
-      - name: Simulate merge commit for workflow_dispatch from PRs
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && steps.artifact-data.outputs.ref != github.ref
-        run: |
-          cd "${GITHUB_WORKSPACE}"
-          set +e
-          head_ref_sha="$(git show-ref -s HEAD 2>/dev/null)"
-          echo "HEAD was at ${head_ref_sha}"
-          artifact_ref="${{ steps.artifact-data.outputs.ref || '' }}"
-          echo "Artifact ref: ${artifact_ref}"
-          artifact_ref_sha="$(git show-ref -s "${artifact_ref}" 2>/dev/null)"
-          echo "Artifact ref sha: ${artifact_ref_sha}"
-          if [ "${head_ref_sha}" != "${artifact_ref_sha}" ] && [ -n "${artifact_ref_sha}" ]; then
-            echo "Checking out artifact ref ${artifact_ref} at sha ${artifact_ref_sha}"
-            set -e
-            git fetch origin "${artifact_ref}:refs/remotes/pull/${artifact_ref}"
-            git checkout "refs/remotes/pull/${artifact_ref}"
-          else
-            echo "HEAD is already at artifact ref sha, or artifact ref sha is empty, skipping checkout"
-          fi
-      - name: Check out Pull Request
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: DEBUG Tap Repo
+      - name: DEBUG Tap Repo before brew update-reset
         run: |
           echo HOMEBREW_TAP_REPOSITORY=${{ steps.set-up-homebrew.outputs.repository-path }}
           ls -l ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -280,6 +255,33 @@ jobs:
           HOMEBREW_DEVELOPER: 1
         run: |
           brew cleanup
+
+      - name: Simulate merge commit for workflow_dispatch from PRs
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && steps.artifact-data.outputs.ref != github.ref
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          set +e
+          head_ref_sha="$(git show-ref -s HEAD 2>/dev/null)"
+          echo "HEAD was at ${head_ref_sha}"
+          artifact_ref="${{ steps.artifact-data.outputs.ref || '' }}"
+          echo "Artifact ref: ${artifact_ref}"
+          artifact_ref_sha="$(git show-ref -s "${artifact_ref}" 2>/dev/null)"
+          echo "Artifact ref sha: ${artifact_ref_sha}"
+          if [ "${head_ref_sha}" != "${artifact_ref_sha}" ] && [ -n "${artifact_ref_sha}" ]; then
+            echo "Checking out artifact ref ${artifact_ref} at sha ${artifact_ref_sha}"
+            set -e
+            git fetch origin "${artifact_ref}:refs/remotes/pull/${artifact_ref}"
+            git checkout "refs/remotes/pull/${artifact_ref}"
+          else
+            echo "HEAD is already at artifact ref sha, or artifact ref sha is empty, skipping checkout"
+          fi
+
+      - name: Check out Pull Request
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.ref_name }}
 
       - name: Login to GitHub Packages repo (docker v2 API)
         id: ghcr_login
