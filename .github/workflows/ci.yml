@@ -12,15 +12,142 @@ on:
       - master
       - main
       - develop
+  workflow_dispatch:
+    inputs:
+      bottles_artifact_data:
+        description: "JSON string with artifact details from test-bot to install & test"
+        required: true
+        type: string
+
 env:
-  debug_ci: false
+  debug_ci: true
 jobs:
+  bottles-artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      bottles_artifact_data: ${{ steps.set-data.outputs.bottles_artifact_data || steps.import-artifact-data.outputs.bottles_artifact_data }}
+    steps:
+      - name: Set outputs from workflow dispatch inputs
+        id: set-data
+        run: |
+          echo 'bottles_artifact_data=${{ github.event.inputs.bottles_artifact_data }}' >> "$GITHUB_OUTPUT"
+        if: ${{ github.event.inputs.bottles_artifact_data != '' }}
+      - name: Get run-id from workflow_dispatch input data
+        uses: actions/github-script@v8
+        if: ${{ github.event.inputs.bottles_artifact_data != '' }}
+        id: import-artifact-data-input
+        env:
+          BOTTLES_ARTIFACT_DATA: ${{ steps.set-data.outputs.bottles_artifact_data }}
+        with:
+          script: |
+            const inputData = JSON.parse(process.env.BOTTLES_ARTIFACT_DATA || '{}');
+            try {
+              core.setOutput('run-id', inputData[Object.keys(inputData)[0]].workflow_run_id || '');
+              core.summary.addHeading('Bottles Artifact Data', '2');
+              core.summary.addBreak();
+              core.summary.addEOL();
+              core.summary.addRaw(`**Using \`workflow_run_id\` from \`workflow_dispatch\` input data:** ${inputData[Object.keys(inputData)[0]].workflow_run_id || ''}\n`);
+            } catch (err) {
+              core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m Error reading \u001b[38;5;6mworkflow_run_id\u001b[0m from \u001b[38;5;6mbottles_artifact_data\u001b[0m JSON input: \u001b[38;5;9m${err.message}\u001b[0m`);
+            } finally {
+              core.summary.write();
+            }
+      - name: DEBUG - Print refs
+        if: ${{ env.debug_ci == 'true' }}
+        run: |
+          echo 'github.ref=${{ github.ref }}'
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+          echo 'github.ref_name=${{ github.ref_name }}'
+      - name: Wait for tests to succeed
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        uses: lewagon/wait-on-check-action@v1.4.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'trigger_artifact_test'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      - name: Get run ID of "tests.yml" workflow
+        id: tests-workflow
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        run: |
+          REPO="${{ github.repository }}"
+          WF_NAME="tests.yml"
+          RUN_ID="$(gh run --repo "${REPO}" list --workflow "${WF_NAME}" --json databaseId --jq '.[0].databaseId')"
+          echo "Detected latest run id of ${RUN_ID} for workflow ${WF_NAME}"
+          echo "run-id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v5
+        id: download-artifact-metadata
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        with:
+          pattern: 'bottles-metadata.json'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.import-artifact-data-input.outputs.run-id || steps.tests-workflow.outputs.run-id }}
+          path: "${GITHUB_WORKSPACE}/bottles-artifact"
+      - name: DEBUG - Artifact bottles-metadata.json contents
+        if: ${{ env.debug_ci == 'true' && github.event.inputs.bottles_artifact_data == '' }}
+        run: |
+          ls -R ${{ steps.download-artifact-metadata.outputs.download-path }}
+          cat "${GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json" || true
+      - uses: actions/github-script@v8
+        if: ${{ github.event.inputs.bottles_artifact_data == '' }}
+        id: import-artifact-data
+        env:
+          BOTTLES_ARTIFACT_DATA_JSON_FILE: ${{ steps.download-artifact-metadata.outputs.download-path }}/bottles-metadata.json
+        with:
+          script: |
+            const fs = require('node:fs');
+            const inputDataFile = process.env.BOTTLES_ARTIFACT_DATA_JSON_FILE;
+            let inputData = {};
+            try {
+              inputData = JSON.parse(fs.readFileSync(inputDataFile, 'utf8'));
+              core.setOutput('bottles_artifact_data', JSON.stringify(inputData));
+            } catch (err) {
+              console.log(`Errror reading data from artifact metadata JSON file: ${err}`);
+            }
+
   test:
+    needs: bottles-artifact
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [self-hosted-macos-12, macos-13, macos-14]
+        os: [ubuntu-latest, macos-latest]
     steps:
+      - name: Get artifact data for current OS
+        uses: actions/github-script@v8
+        id: artifact-data
+        env:
+          BOTTLES_ARTIFACT_DATA: ${{ needs.bottles-artifact.outputs.bottles_artifact_data }}
+          OS: ${{ matrix.os }}
+        with:
+          script: |
+            const inputData = JSON.parse(process.env.BOTTLES_ARTIFACT_DATA || '{}');
+            const os = process.env.OS || '';
+            try {
+              if (Object.keys(inputData).length === 0) {
+                console.log('No bottles artifact data provided as workflow_dispatch input.');
+                console.log('Checking for artifact metadata JSON file...');
+                core.warning(`\u001b[1m\u001b[38;5;3mWarning:\u001b[0m \u001b[38;5;9mNo bottles artifact data provided as workflow_dispatch input.\u001b[0m`);
+              } else {
+                inputDataKeys = Object.keys(inputData);
+                console.log(`Found bottles artifact data for: ${inputDataKeys.join(', ')}`);
+                if (inputData[os]) {
+                  console.log(`Using artifact data for current OS: ${os}`);
+                  core.setOutput('id', inputData[os].id || '');
+                  core.setOutput('url', inputData[os].url || '');
+                  core.setOutput('digest', inputData[os].digest || '');
+                  core.setOutput('arch', inputData[os].arch || '');
+                  core.setOutput('workflow_run_id', inputData[os].workflow_run_id || '');
+                  core.setOutput('ref', inputData[os].ref || '');
+                  core.notice(`\u001b[1m\u001b[38;5;6mArtifact Data:\u001b[0m \u001b[38;5;2m${os}\u001b[0m => ${JSON.stringify(inputData[os], null, 2)}`);
+                } else {
+                  core.error(`\u001b[1m\u001b[38;5;1mError:\u001b[0m : \u001b[38;5;9mNo artifact data found for current OS:\u001b[0m \u001b[38;5;6m${os}\u001b[0m`);
+                }
+              }
+            } finally {
+              core.summary.write();
+            }
 # Now handled by Homebrew/actions/setup-homebrew
 # See: https://github.com/Homebrew/actions/blob/master/setup-homebrew/main.sh#L207-L242
 #      - name: Check out code
@@ -30,9 +157,13 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Add SSH_AUTH_SOCK to user shell .profile
         run: |
-          sudo tee -a ~/.profile <<EOPROFILE
-          SSH_AUTH_SOCK=${{ env.SSH_AUTH_SOCK }}
+          [ ! -d "${HOME}/.profile.d" ] && mkdir -p ~/.profile.d || true
+          tee -a ~/.profile <<EOPROFILE
+          [ -n "\$(ls "\$HOME"/.profile.d 2>/dev/null)" ] && for f in "\$HOME"/.profile.d/*.sh; do . "\$f" ; done
           EOPROFILE
+          tee -a ~/.profile.d/09-ssh-auth-sock.sh <<EOPROFILED
+          SSH_AUTH_SOCK=${{ env.SSH_AUTH_SOCK }}
+          EOPROFILED
       - name: Configure global git SSH URLs
         run: |
           git config --global url."git@github.com:".insteadOf "https://github.com/"
@@ -41,17 +172,22 @@ jobs:
         run: |
           echo "BREWFILE_PATH=${GITHUB_WORKSPACE}/Brewfile.ci" >> "$GITHUB_ENV"
 
+      - name: DEBUG - Print all shell env exports
+        run: export -p
+        if: ${{ env.debug_ci == 'true' }}
+
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
 
-      - name: Check out Pull Request
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+      - name: DEBUG - Print refs & github event name
+        run: |
+          echo "github.event_name=${{github.event_name}}"
+          echo "github.ref=${{github.ref}}"
+          echo "steps.artifact-data.outputs.ref=${{ steps.artifact-data.outputs.ref }}"
+        if: ${{ env.debug_ci == 'true' }}
 
-      - name: DEBUG Tap Repo
+      - name: DEBUG Tap Repo before brew update-reset
         run: |
           echo HOMEBREW_TAP_REPOSITORY=${{ steps.set-up-homebrew.outputs.repository-path }}
           ls -l ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -102,7 +238,7 @@ jobs:
       #       brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}-${{ hashFiles( env.BREWFILE_PATH, '**/Brewfile.lock.json') }}
       #       brew-${{ matrix.os }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/clear_github_actions_cache') }}
 
-      - name: Run brew update
+      - name: Run brew update-reset
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
@@ -112,6 +248,7 @@ jobs:
         run: |
           cd '${{ steps.set-up-homebrew.outputs.repository-path }}' && git checkout "refs/remotes/pull/${GITHUB_REF_NAME}"
         if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
+
       - name: Clean homebrew cache
         env:
           HOMEBREW_COLOR: 1
@@ -119,21 +256,123 @@ jobs:
         run: |
           brew cleanup
 
+      - name: Simulate merge commit for workflow_dispatch from PRs
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && steps.artifact-data.outputs.ref != github.ref
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          set +e
+          head_ref_sha="$(git show-ref -s HEAD 2>/dev/null)"
+          echo "HEAD was at ${head_ref_sha}"
+          artifact_ref="${{ steps.artifact-data.outputs.ref || '' }}"
+          echo "Artifact ref: ${artifact_ref}"
+          artifact_ref_sha="$(git show-ref -s "${artifact_ref}" 2>/dev/null)"
+          echo "Artifact ref sha: ${artifact_ref_sha}"
+          if [ "${head_ref_sha}" != "${artifact_ref_sha}" ] && [ -n "${artifact_ref_sha}" ]; then
+            echo "Checking out artifact ref ${artifact_ref} at sha ${artifact_ref_sha}"
+            set -e
+            git fetch origin "${artifact_ref}:refs/remotes/pull/${artifact_ref}"
+            git checkout "refs/remotes/pull/${artifact_ref}"
+          else
+            echo "HEAD is already at artifact ref sha, or artifact ref sha is empty, skipping checkout"
+          fi
+
+      - name: Check out Pull Request
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.ref_name }}
+
+      - name: Login to GitHub Packages repo (docker v2 API)
+        id: ghcr_login
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+          LYRAPHASE_RUNNER_PACKAGES_GHCR_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN }}"
+        run: |
+          brew install jq || true
+          if [ "macOS" == "$RUNNER_OS" ]; then
+            base64_flags='-b 0 -o -'
+          elif [ "Linux" == "$RUNNER_OS" ]; then
+            base64_flags='-w 0'
+          fi
+          # shellcheck disable=SC2086
+          GHCR_BASIC_AUTH_TOKEN="$(echo -n "${LYRAPHASE_RUNNER_PACKAGES_GHCR_USER}:${LYRAPHASE_RUNNER_PACKAGES_GHCR_CLASSIC_TOKEN}" | base64 $base64_flags )"
+          GHCR_TOKEN="$(curl -o - -v -H "Authorization: Basic ${GHCR_BASIC_AUTH_TOKEN}" \
+            "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/homebrew-}/*:pull" | \
+            jq -jr '.token')"
+          if [ -n "$GHCR_TOKEN" ]; then
+            echo "ghcr_bearer_token=${GHCR_TOKEN}" >> "${GITHUB_OUTPUT}"
+          fi
+          if [ -n "$GHCR_BASIC_AUTH_TOKEN" ]; then
+            echo "ghcr_basic_token=${GHCR_BASIC_AUTH_TOKEN}" >> "${GITHUB_OUTPUT}"
+          fi
+          :
+
+      - name: DEBUG - Show artifact details if passed
+        run: |
+          echo 'bottles_artifact_data=${{ needs.bottles-artifact.outputs.bottles_artifact_data }}'
+          echo 'artifact id=${{ steps.artifact-data.outputs.id }}'
+          echo 'artifact url=${{ steps.artifact-data.outputs.url }}'
+          echo 'artifact digest=${{ steps.artifact-data.outputs.digest }}'
+          echo 'artifact arch=${{ steps.artifact-data.outputs.arch }}'
+          echo 'artifact workflow_run_id=${{ steps.artifact-data.outputs.workflow_run_id }}'
+          echo 'artifact ref=${{ steps.artifact-data.outputs.ref }}'
+        if: ${{ env.debug_ci == 'true' && needs.bottles-artifact.outputs.bottles_artifact_data != '' }}
+      - name: Download artifact
+        id: download_artifact
+        uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ steps.artifact-data.outputs.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.artifact-data.outputs.workflow_run_id }}
+          path: "${{ github.workspace }}/bottles-artifact"
+        if: ${{ steps.artifact-data.outputs.id != '' && steps.artifact-data.outputs.workflow_run_id != '' }}
+      - name: DEBUG - List downloaded artifact files
+        run: |
+          ls -lA "${GITHUB_WORKSPACE}/"
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}" || true
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}"/*.bottle.tar.gz || true
+        if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
+      - name: Install bottles from artifact
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+        run: |
+          brew install ${{ steps.download_artifact.outputs.download-path }}/*.bottle.tar.gz
+        if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: HACK - Force link conflicting go binaries
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
         run: |
           if [ -e "/usr/local/opt/go@1.21" ]; then
             brew install go || true
             brew link --overwrite go
           fi
           :
+      - name: Debug Brewfile.ci dependencies
+        run: |
+          cat "${BREWFILE_PATH}"
+          git show HEAD
+          git status && git log --graph --decorate --oneline --all --abbrev-commit
+        if: ${{ env.debug_ci == 'true' }}
 
       - name: Install Brewfile.ci dependencies
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
+          HOMEBREW_ALLOWED_TAPS: 'lyraphase/right2repair'
+          HOMEBREW_FORBIDDEN_TAPS: 'homebrew/core'
         run: |
           brew bundle install --file="${BREWFILE_PATH}"
 
@@ -149,6 +388,12 @@ jobs:
           ls -lR "${GITHUB_WORKSPACE}"
           ls -lR "$(brew --prefix)"
         if: ${{ env.debug_ci == 'true' }}
+      - name: Run test setup
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+          HOMEBREW_NO_SORBET_RUNTIME: 1
+        run: make test-before || true
       - name: Run tap install
         env:
           HOMEBREW_COLOR: 1
@@ -159,6 +404,11 @@ jobs:
         env:
           HOMEBREW_COLOR: 1
           HOMEBREW_DEVELOPER: 1
+          HOMEBREW_DISPLAY_INSTALL_TIMES: 1
+          HOMEBREW_BOTTLE_DOMAIN: 'https://ghcr.io/v2/LyraPhase/right2repair'
+          HOMEBREW_GITHUB_PACKAGES_USER: "${{ secrets.LYRAPHASE_RUNNER_PACKAGES_GHCR_USER }}"
+          HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_basic_token }}"
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: "${{ steps.ghcr_login.outputs.ghcr_bearer_token }}"
         run: |
           make test
       - name: Upload install.log on failure
@@ -167,3 +417,22 @@ jobs:
         with:
           name: Build failure logs
           path: /var/log/install.log
+      - name: Cleanup & teardown after test
+        if: always()
+        env:
+          HOMEBREW_COLOR: 1
+          HOMEBREW_DEVELOPER: 1
+          HOMEBREW_DISPLAY_INSTALL_TIMES: 1
+        run: |
+          make test-clean || true
+      - name: Cleanup SSH_AUTH_SOCK from user shell .profile
+        if: always()
+        run: |
+          [ -f "${HOME}/.profile.d/09-ssh-auth-sock.sh" ] && rm -f ~/.profile.d/09-ssh-auth-sock.sh || true
+          [ -d "${HOME}/.profile.d" ] && rmdir ~/.profile.d || true
+          if [ -f "${HOME}/.profile" ]; then
+            sed -i'' -e '/^SSH_AUTH_SOCK=/d' ~/.profile || true
+            # shellcheck disable=SC2016
+            sed -i''  -e '/^[ -n "\$(ls "\$HOME"\/profile\.d 2>\/dev\/null)" ].*/d' ~/.profile || true
+            [ -f "${HOME}/.profile-e" ] && rm -f ~/.profile-e || true
+          fi
