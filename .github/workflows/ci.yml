@@ -185,8 +185,8 @@ jobs:
           echo "steps.artifact-data.outputs.ref=${{ steps.artifact-data.outputs.ref }}"
         if: ${{ env.debug_ci == 'true' }}
 
-      - name: Simulate merge commit for PRs
-        if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+      - name: Simulate merge commit for workflow_dispatch from PRs
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && steps.artifact-data.outputs.ref != github.ref
         run: |
           cd "${GITHUB_WORKSPACE}"
           head_ref_sha="$(git show-ref -s HEAD 2>/dev/null)"
