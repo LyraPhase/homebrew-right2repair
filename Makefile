@@ -30,7 +30,7 @@ test-before: ## Setup / prepare before test
 
 test: #install ## Run tests
 	brew audit --cask $(CASK_NAMES)
-	[ "$$CI" = "true" -a "$$RUNNER_OS" != "Linux" ] || [ "$$CI" != "true" ] && brew install --cask --verbose $(CASK_NAMES)
+	if [ "$$CI" = "true" -a "$$RUNNER_OS" != "Linux" ] || [ "$$CI" != "true" ]; then brew install --cask --verbose $(CASK_NAMES) ; fi
 	brew install --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
 #	pkgutil --pkgs=$(PKG_ID)
 
