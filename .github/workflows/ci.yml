@@ -271,6 +271,8 @@ jobs:
             git fetch origin "+refs/heads/${github_ref_name}"
             git checkout -b "${github_ref_name}" "origin/${github_ref_name}"
             git checkout main
+            git config --global user.email "lyraphase-runner@lyraphase.com"
+            git config --global user.name "lyraphase-runner"
             git merge --no-ff -m "Simulated merge commit for workflow_dispatch run" "${github_ref_name}"
           else
             echo "HEAD is already at artifact ref sha, or artifact ref sha is empty, skipping checkout"
