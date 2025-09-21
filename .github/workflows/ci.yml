@@ -268,8 +268,9 @@ jobs:
             git checkout "refs/remotes/pull/${artifact_ref}"
           elif [ -z "${artifact_ref_sha}" ]; then
             echo "Artifact ref sha is empty, simulating merge"
-            git checkout main
             git fetch origin "+refs/heads/${github_ref_name}"
+            git checkout -b "${github_ref_name}" "origin/${github_ref_name}"
+            git checkout main
             git merge --no-ff -m "Simulated merge commit for workflow_dispatch run" "${github_ref_name}"
           else
             echo "HEAD is already at artifact ref sha, or artifact ref sha is empty, skipping checkout"
