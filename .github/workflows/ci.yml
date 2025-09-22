@@ -61,6 +61,9 @@ jobs:
       - name: DEBUG - print github obj
         if: ${{ env.debug_ci == 'true' }}
         run: echo '${{ toJson(github.event.pull_request) }}'
+      - name: DEBUG - check ref to wait on
+        if: ${{ env.debug_ci == 'true' }}
+        run: echo '${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}'
       - name: Wait for tests to succeed
         if: ${{ github.event.inputs.bottles_artifact_data == '' }}
         uses: lewagon/wait-on-check-action@v1.4.0
