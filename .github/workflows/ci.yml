@@ -63,13 +63,13 @@ jobs:
         run: echo '${{ toJson(github.event.pull_request) }}'
       - name: DEBUG - check ref to wait on
         if: ${{ env.debug_ci == 'true' }}
-        run: echo '${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}'
+        run: echo '${{ github.event_name == 'pull_request' && toJson(github.event.pull_request.head.ref) || toJson(github.ref) }}'
       - name: Wait for tests to succeed
         if: ${{ github.event.inputs.bottles_artifact_data == '' }}
         uses: lewagon/wait-on-check-action@v1.4.0
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
-          check-name: 'trigger_artifact_test'
+          check-name: 'test-bot'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
       - name: Get run ID of "tests.yml" workflow
