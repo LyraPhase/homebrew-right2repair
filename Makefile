@@ -26,7 +26,7 @@ install: $(TAP_DIR) $(TAP_DIR)/$(REPO_NAME) ## Install Tap via git checkout syml
 	brew tap
 
 test-before: ## Setup / prepare before test
-	brew uninstall --force --zap --verbose --ignore-dependencies $(FORMULA_NAMES)
+	brew uninstall --formula --force --verbose --ignore-dependencies $(FORMULA_NAMES)
 
 test: #install ## Run tests
 	brew audit --cask $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(CASK_NAMES))
@@ -36,7 +36,7 @@ test: #install ## Run tests
 
 test-clean: ## Teardown / Cleanup after test
 	brew uninstall --cask --force --zap --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(CASK_NAMES))
-	brew uninstall --force --zap --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
+	brew uninstall --formula --force --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
 
 clean:: ## Remove temporary/build files.
 	rm -rf $(TAP_DIR)/$(REPO_NAME)
