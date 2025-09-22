@@ -252,7 +252,9 @@ jobs:
           brew update-reset
       - name: Fix Tap repo checked out merge commit ref (post brew update-reset)
         run: |
-          cd '${{ steps.set-up-homebrew.outputs.repository-path }}' && git checkout "refs/remotes/pull/${GITHUB_REF_NAME}"
+          cd '${{ steps.set-up-homebrew.outputs.repository-path }}'
+          git fetch origin "+refs/heads/${GITHUB_REF_NAME}"
+          git checkout "refs/remotes/pull/${GITHUB_REF_NAME}"
         if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
 
       - name: Simulate merge commit for workflow_dispatch from PRs
