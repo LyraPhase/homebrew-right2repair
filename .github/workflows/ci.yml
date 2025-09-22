@@ -96,8 +96,9 @@ jobs:
       - name: DEBUG - Artifact bottles-metadata.json contents
         if: ${{ env.debug_ci == 'true' && github.event.inputs.bottles_artifact_data == '' }}
         run: |
-          ls -R ${{ steps.download-artifact-metadata.outputs.download-path }} || true
-          cat "${GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json" || true
+          set +e
+          ls -R ${{ steps.download-artifact-metadata.outputs.download-path }}
+          cat "${GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json"
       - uses: actions/github-script@v8
         if: ${{ github.event.inputs.bottles_artifact_data == '' }}
         id: import-artifact-data
@@ -190,6 +191,7 @@ jobs:
 
       - name: DEBUG - Print refs & github event name
         run: |
+          set +e
           echo "github.event_name=${{github.event_name}}"
           echo "github.ref=${{github.ref}}"
           echo "steps.artifact-data.outputs.ref=${{ steps.artifact-data.outputs.ref }}"
@@ -197,6 +199,7 @@ jobs:
 
       - name: DEBUG Tap Repo before brew update-reset
         run: |
+          set +e
           echo HOMEBREW_TAP_REPOSITORY=${{ steps.set-up-homebrew.outputs.repository-path }}
           ls -l ${{ steps.set-up-homebrew.outputs.repository-path }}
           cd ${{ steps.set-up-homebrew.outputs.repository-path }} && git status && git log --graph --decorate --oneline --all --abbrev-commit
@@ -278,6 +281,7 @@ jobs:
             git checkout "refs/remotes/pull/${artifact_ref}"
           elif [ -z "${artifact_ref_sha}" ]; then
             echo "Artifact ref sha is empty, simulating merge"
+            set -e
             git fetch origin "+refs/heads/${github_ref_name}"
             git checkout -b "${github_ref_name}" "origin/${github_ref_name}"
             git checkout main
@@ -324,6 +328,7 @@ jobs:
 
       - name: DEBUG - Show artifact details if passed
         run: |
+          set +e
           echo 'bottles_artifact_data=${{ needs.bottles-artifact.outputs.bottles_artifact_data }}'
           echo 'artifact id=${{ steps.artifact-data.outputs.id }}'
           echo 'artifact url=${{ steps.artifact-data.outputs.url }}'
@@ -343,9 +348,10 @@ jobs:
         if: ${{ steps.artifact-data.outputs.id != '' && steps.artifact-data.outputs.workflow_run_id != '' }}
       - name: DEBUG - List downloaded artifact files
         run: |
+          set +e
           ls -lA "${GITHUB_WORKSPACE}/"
-          ls -lA "${{ steps.download_artifact.outputs.download-path }}" || true
-          ls -lA "${{ steps.download_artifact.outputs.download-path }}"/*.bottle.tar.gz || true
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}"
+          ls -lA "${{ steps.download_artifact.outputs.download-path }}"/*.bottle.tar.gz
         if: ${{ env.debug_ci == 'true' && steps.download_artifact.outputs.download-path != '' }}
       - name: Run test setup
         env:
@@ -374,8 +380,9 @@ jobs:
             brew link --overwrite go
           fi
           :
-      - name: Debug Brewfile.ci dependencies
+      - name: DEBUG - Brewfile.ci dependencies
         run: |
+          set +e
           cat "${BREWFILE_PATH}"
           git show HEAD
           git status && git log --graph --decorate --oneline --all --abbrev-commit
@@ -396,6 +403,7 @@ jobs:
 
       - name: DEBUG - GitHub Workspace
         run: |
+          set +e
           echo GITHUB_WORKSPACE="$GITHUB_WORKSPACE"
         if: ${{ env.debug_ci == 'true' }}
       - name: DEBUG - Print all shell env exports
@@ -403,6 +411,7 @@ jobs:
         if: ${{ env.debug_ci == 'true' }}
       - name: DEBUG - List workspace and Homebrew contents
         run: |
+          set +e
           ls -lR "${GITHUB_WORKSPACE}"
           ls -lR "$(brew --prefix)"
         if: ${{ env.debug_ci == 'true' }}
