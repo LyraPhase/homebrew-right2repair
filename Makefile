@@ -1,9 +1,9 @@
 GITHUB_USER := lyraphase
 REPO_NAME := homebrew-right2repair
 REPO := $(GITHUB_USER)/$(REPO_NAME)
-FILTER_OUT_FORMULAS := ansible-builder
-CASK_NAMES := $(patsubst %.rb,%,$(patsubst Casks/%,%,$(wildcard Casks/*.rb)))
-FORMULA_NAMES := $(filter-out $(FILTER_OUT_FORMULAS),$(patsubst %.rb,%,$(patsubst Formula/%,%,$(wildcard Formula/*.rb))))
+FILTER_OUT_FORMULAS ?= ansible-builder
+CASK_NAMES ?= $(patsubst %.rb,%,$(notdir $(wildcard Casks/*/*.rb Casks/*.rb)))
+FORMULA_NAMES ?= $(filter-out $(FILTER_OUT_FORMULAS),$(patsubst %.rb,%,$(notdir $(wildcard Formula/*/*.rb Formula/*.rb))))
 PKG_ID :=
 HOMEBREW_LIBRARY_TAPS := $(shell brew --repo)/Library/Taps
 TAP_DIR := $(HOMEBREW_LIBRARY_TAPS)/$(GITHUB_USER)
@@ -29,13 +29,13 @@ test-before: ## Setup / prepare before test
 	brew uninstall --force --zap --verbose --ignore-dependencies $(FORMULA_NAMES)
 
 test: #install ## Run tests
-	brew audit --cask $(CASK_NAMES)
-	if [ "$$CI" = "true" -a "$$RUNNER_OS" != "Linux" ] || [ "$$CI" != "true" ]; then brew install --cask --verbose $(CASK_NAMES) ; fi
+	brew audit --cask $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(CASK_NAMES))
+	if [ "$$CI" = "true" -a "$$RUNNER_OS" != "Linux" ] || [ "$$CI" != "true" ]; then brew install --cask --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(CASK_NAMES)) ; fi
 	brew install --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
 #	pkgutil --pkgs=$(PKG_ID)
 
 test-clean: ## Teardown / Cleanup after test
-	brew uninstall --cask --force --zap --verbose $(CASK_NAMES)
+	brew uninstall --cask --force --zap --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(CASK_NAMES))
 	brew uninstall --force --zap --verbose $(addprefix $(GITHUB_USER)/$(REPO_NAME)/,$(FORMULA_NAMES))
 
 clean:: ## Remove temporary/build files.
