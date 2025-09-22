@@ -253,7 +253,7 @@ jobs:
       - name: Fix Tap repo checked out merge commit ref (post brew update-reset)
         run: |
           cd '${{ steps.set-up-homebrew.outputs.repository-path }}'
-          git fetch origin "+${GITHUB_REF}"
+          git fetch origin "+${GITHUB_REF}:${GITHUB_REF}"
           git checkout "${GITHUB_REF}"
         if: github.ref != 'refs/heads/main' && github.event_name == 'pull_request'
 
