@@ -90,11 +90,11 @@ jobs:
           pattern: 'bottles-metadata.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.import-artifact-data-input.outputs.run-id || steps.tests-workflow.outputs.run-id }}
-          path: "${GITHUB_WORKSPACE}/bottles-artifact"
+          path: "bottles-artifact"
       - name: DEBUG - Artifact bottles-metadata.json contents
         if: ${{ env.debug_ci == 'true' && github.event.inputs.bottles_artifact_data == '' }}
         run: |
-          ls -R ${{ steps.download-artifact-metadata.outputs.download-path }}
+          ls -R ${{ steps.download-artifact-metadata.outputs.download-path }} || true
           cat "${GITHUB_WORKSPACE}/bottles-artifact/bottles-metadata.json" || true
       - uses: actions/github-script@v8
         if: ${{ github.event.inputs.bottles_artifact_data == '' }}
