@@ -69,7 +69,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.4.0
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
-          check-name: 'test-bot'
+          check-regexp: '(test-bot|trigger_artifact_test)'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
       - name: Get run ID of "tests.yml" workflow
