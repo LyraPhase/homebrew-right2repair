@@ -40,6 +40,9 @@ class Node < Formula
 
   on_macos do
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1699
+    def patches
+      DATA
+    end
   end
 
   link_overwrite "bin/npm", "bin/npx"
@@ -294,3 +297,17 @@ class Node < Formula
     system bin/"node", "wasi-smoke-test.mjs"
   end
 end
+
+__END__
+--- node-v24.10.0/common.gypi	2025-10-08 13:56:37.000000000 -0600
++++ node-v24.10.0/common.gypi	2025-10-15 12:18:24.000000000 -0600
+@@ -651,7 +651,7 @@
+           'GCC_ENABLE_PASCAL_STRINGS': 'NO',        # No -mpascal-strings
+           'GCC_STRICT_ALIASING': 'NO',              # -fno-strict-aliasing
+           'PREBINDING': 'NO',                       # No -Wl,-prebind
+-          'MACOSX_DEPLOYMENT_TARGET': '13.5',       # -mmacosx-version-min=13.5
++          'MACOSX_DEPLOYMENT_TARGET': '12.7',       # -mmacosx-version-min=13.5
+           'USE_HEADERMAP': 'NO',
+           'WARNING_CFLAGS': [
+             '-Wall',
+
