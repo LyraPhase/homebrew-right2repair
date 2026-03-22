@@ -3,7 +3,7 @@ cask "drobo-dashboard" do
   sha256 "65379a749af92e520d59560c5270e4e29888553f14f29626db90ea89f9e87fab"
 
   url "https://files.drobo.com/webrelease/dashboard/Drobo-Dashboard-#{version.csv.first}.dmg",
-      verified: "files.drobo.com/webrelease/dashboard/Drobo-Dashboard-"
+      verified: "files.drobo.com/webrelease/dashboard/"
   name "Drobo Dashboard"
   desc "Management software and drivers for Data Robotics storage devices"
   homepage "https://web.archive.org/web/20240208020709/https://www.drobo.com/"
