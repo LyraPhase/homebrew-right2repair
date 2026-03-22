@@ -37,7 +37,6 @@ cask "drobo-dashboard" do
                 "/Library/Extensions/DroboTBT.kext",
                 "/Library/Extensions/TrustedDataSCSIDriver.kext",
               ]
-
   end
 
   zap trash: [
