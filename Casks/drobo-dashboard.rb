@@ -22,14 +22,13 @@ cask "drobo-dashboard" do
               "com.datarobotics.drobodashboard",
             ],
             kext:      [
-              "com.TrustedData.driver.VendorSpecificType00",
               "com.drobo.SCSI.ThunderBolt",
+              "com.TrustedData.driver.VendorSpecificType00",
             ],
             script:    [
               { executable: "#{staged_path}/Uninstall.app/Contents/Resources/Scripts/Drobo_Dashboard_uninstall.sh",
                 sudo:       true,
-                type:       :uninstall,
-              },
+                type:       :uninstall },
             ],
             pkgutil:   "com.datarobotics.droboDashboard*",
             delete:    [
