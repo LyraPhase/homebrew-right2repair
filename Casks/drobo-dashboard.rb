@@ -11,7 +11,8 @@ cask "drobo-dashboard" do
     skip "No version information available"
   end
 
-  depends_on macos: ">= :sierra"
+  ## Homebrew only supports currently maintained macOS versions
+  # depends_on macos: ">= :sierra"
 
   pkg "Install.app/Contents/Resources/Drobo_Dashboard_Installer_#{version.before_comma}_#{version.after_comma}.pkg"
 
