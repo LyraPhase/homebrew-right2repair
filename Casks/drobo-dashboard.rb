@@ -27,7 +27,9 @@ cask "drobo-dashboard" do
             ],
             script:    [
               { executable: "#{staged_path}/Uninstall.app/Contents/Resources/Scripts/Drobo_Dashboard_uninstall.sh",
-                sudo:       true },
+                sudo:       true,
+                type:       :uninstall,
+              },
             ],
             pkgutil:   "com.datarobotics.droboDashboard*",
             delete:    [
