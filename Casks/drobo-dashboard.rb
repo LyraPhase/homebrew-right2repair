@@ -15,27 +15,30 @@ cask "drobo-dashboard" do
   ## Homebrew only supports currently maintained macOS versions
   # depends_on macos: ">= :sierra"
 
-  pkg "Install.app/Contents/Resources/Drobo_Dashboard_Installer_#{version.csv.first}_#{version.csv.second}.pkg"
+  on_macos do
+    pkg "Install.app/Contents/Resources/Drobo_Dashboard_Installer_#{version.csv.first}_#{version.csv.second}.pkg"
 
-  uninstall launchctl: "com.datarobotics.ddservice64d",
-            quit:      [
-              "com.datarobotics.drobo",
-              "com.datarobotics.drobodashboard",
-            ],
-            kext:      [
-              "com.drobo.SCSI.ThunderBolt",
-              "com.TrustedData.driver.VendorSpecificType00",
-            ],
-            script:    [
-              { executable: "#{staged_path}/Uninstall.app/Contents/Resources/Scripts/Drobo_Dashboard_uninstall.sh",
-                sudo:       true },
-            ],
-            pkgutil:   "com.datarobotics.droboDashboard*",
-            delete:    [
-              "/Library/Application Support/Data Robotics/Drobo Dashboard",
-              "/Library/Extensions/DroboTBT.kext",
-              "/Library/Extensions/TrustedDataSCSIDriver.kext",
-            ]
+    uninstall launchctl: "com.datarobotics.ddservice64d",
+              quit:      [
+                "com.datarobotics.drobo",
+                "com.datarobotics.drobodashboard",
+              ],
+              kext:      [
+                "com.drobo.SCSI.ThunderBolt",
+                "com.TrustedData.driver.VendorSpecificType00",
+              ],
+              script:    [
+                { executable: "#{staged_path}/Uninstall.app/Contents/Resources/Scripts/Drobo_Dashboard_uninstall.sh",
+                  sudo:       true },
+              ],
+              pkgutil:   "com.datarobotics.droboDashboard*",
+              delete:    [
+                "/Library/Application Support/Data Robotics/Drobo Dashboard",
+                "/Library/Extensions/DroboTBT.kext",
+                "/Library/Extensions/TrustedDataSCSIDriver.kext",
+              ]
+
+  end
 
   zap trash: [
     "~/Library/Application Support/Drobo Dashboard",
