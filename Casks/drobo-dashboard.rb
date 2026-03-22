@@ -14,7 +14,7 @@ cask "drobo-dashboard" do
   ## Homebrew only supports currently maintained macOS versions
   # depends_on macos: ">= :sierra"
 
-  pkg "Install.app/Contents/Resources/Drobo_Dashboard_Installer_#{version.before_comma}_#{version.after_comma}.pkg"
+  pkg "Install.app/Contents/Resources/Drobo_Dashboard_Installer_#{version.csv.first}_#{version.csv.second}.pkg"
 
   uninstall launchctl: "com.datarobotics.ddservice64d",
             quit:      [
