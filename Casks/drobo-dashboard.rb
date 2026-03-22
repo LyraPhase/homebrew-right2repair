@@ -5,7 +5,7 @@ cask "drobo-dashboard" do
   url "https://files.drobo.com/webrelease/dashboard/Drobo-Dashboard-#{version.csv.first}.dmg"
   name "Drobo Dashboard"
   desc "Management software and drivers for Data Robotics storage devices"
-  homepage "https://www.drobo.com/"
+  homepage "https://web.archive.org/web/20240208020709/https://www.drobo.com/"
 
   livecheck do
     skip "No version information available"
