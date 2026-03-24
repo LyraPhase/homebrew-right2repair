@@ -1,0 +1,47 @@
+cask "drobo-dashboard" do
+  version "3.6.1,115880"
+  sha256 "65379a749af92e520d59560c5270e4e29888553f14f29626db90ea89f9e87fab"
+
+  url "https://files.drobo.com/webrelease/dashboard/Drobo-Dashboard-#{version.csv.first}.dmg",
+      verified: "files.drobo.com/webrelease/dashboard/"
+  name "Drobo Dashboard"
+  desc "Management software and drivers for Data Robotics storage devices"
+  homepage "https://web.archive.org/web/20240208020709/https://www.drobo.com/"
+
+  livecheck do
+    skip "No version information available"
+  end
+
+  ## Homebrew only supports currently maintained macOS versions
+  # depends_on macos: ">= :sierra"
+
+  on_macos do
+    pkg "Install.app/Contents/Resources/Drobo_Dashboard_Installer_#{version.csv.first}_#{version.csv.second}.pkg"
+
+    uninstall launchctl: "com.datarobotics.ddservice64d",
+              quit:      [
+                "com.datarobotics.drobo",
+                "com.datarobotics.drobodashboard",
+              ],
+              kext:      [
+                "com.drobo.SCSI.ThunderBolt",
+                "com.TrustedData.driver.VendorSpecificType00",
+              ],
+              script:    [
+                { executable: "#{staged_path}/Uninstall.app/Contents/Resources/Scripts/Drobo_Dashboard_uninstall.sh",
+                  sudo:       true },
+              ],
+              pkgutil:   "com.datarobotics.droboDashboard*",
+              delete:    [
+                "/Library/Application Support/Data Robotics/Drobo Dashboard",
+                "/Library/Extensions/DroboTBT.kext",
+                "/Library/Extensions/TrustedDataSCSIDriver.kext",
+              ]
+  end
+
+  zap trash: [
+    "~/Library/Application Support/Drobo Dashboard",
+    "~/Library/Preferences/com.datarobotics.drobo.plist",
+    "~/Library/Saved Application State/com.datarobotics.drobodashboard.savedState",
+  ]
+end
